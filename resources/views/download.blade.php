@@ -26,17 +26,17 @@
 			},
 
 			updateTimes: function() {
-				this.created_at = moment(this.metadata.created_at).fromNow()
+				this.created_at = dayjs(this.metadata.created_at).fromNow()
 
 				if (this.metadata.expiry) {
 					if (! this.isExpired()) {
-						this.expires_at = moment(this.metadata.expires_at).fromNow()
+						this.expires_at = dayjs(this.metadata.expires_at).fromNow()
 					}
 				}
 			},
 
 			isExpired: function() {
-				if (moment().isAfter(moment.unix(this.metadata.expires_at))) {
+				if (dayjs().isAfter(dayjs.unix(this.metadata.expires_at))) {
 					this.expired = true
 					return true
 				}

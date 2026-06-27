@@ -7,7 +7,7 @@
 
 ## Description
 
-This PHP application based on Laravel 10.9 allows to share files like Wetransfer. You may install it **on your own server**. It **does not require** any database system, it works with JSON files into the storage folder. It is **multilingual** and comes with english, french, german and korean translations for now. You're welcome to help translating the app.
+This PHP application based on Laravel 12 allows to share files like Wetransfer. You may install it **on your own server**. It **does not require** a traditional database — bundle and user data is stored as JSON flat files in the storage folder via [Orbit](https://github.com/ryangjchandler/orbit). It is **multilingual** and comes with english, french, german and korean translations for now. You're welcome to help translating the app.
 
 This application provides two links per bundle :
 - a bundle preview link : you can send this link to your recipients who will see the bundle content. For example: http://yourdomain/bundle/dda2d646b6746b96ea9b?auth=965242. The recipient can see all the files of the bundle and download the bundle as a ZIP archive.
@@ -49,26 +49,23 @@ A video demo is available [on Youtube](https://youtu.be/hO4tRaZa4N4)
 ## Requirements
 
 Basically, nothing more than Laravel itself:
-- PHP >= 8.1
+- PHP >= 8.3
 - Ctype PHP Extension
 - OpenSSL PHP Extension
-- PDO PHP Extension
 - Mbstring PHP Extension
 - Tokenizer PHP Extension
 - XML PHP Extension
 
 Plus:
-- JSON PHP Extension (included after PHP 5.2+)
-- ZipArchive PHP Extension (included after PHP 5.3+)
-- SQLite
+- JSON PHP Extension
+- ZipArchive PHP Extension
 
 The application also uses:
 - http://www.dropzonejs.com/
 - https://alpinejs.dev/
 - https://tailwindcss.com/
-- https://momentjs.com/
+- https://day.js.org/
 - https://axios-http.com/
-- https://lodash.com/
 
 ## Installation
 
@@ -84,6 +81,7 @@ docker run -d \
 --name filesharing \
 -e APP_NAME="FileSharing" \
 -e APP_URL="<your_url>" \
+-e APP_KEY="<your_generated_key>" \
 -e ASSET_URL="<your_asset_url>" \
 -e UPLOAD_MAX_FILESIZE="1G" \
 -e APP_TIMEZONE="Europe/Paris" \
@@ -96,6 +94,8 @@ axeloz/filesharing:latest
 - use the `-v` option to bind your local storage to the docker instance (persisting data)
 - adapt the `-p` option to listen to the port you need
 - you may pass env variables with the `-e` option
+- `APP_KEY` is required at container startup (generate with `php artisan key:generate --show`)
+- the Docker image runs the Laravel scheduler internally via cron
 - you can use a reverse proxy for SSL termination (example: nginx)
 
 Simple config for Nginx:
@@ -123,11 +123,11 @@ server {
 You can also use in docker compose with the following template:
 
 ```yaml
-version: '3'
 services:
   app:
     image: axeloz/filesharing:latest
     environment:
+      APP_KEY: "<your_generated_key>"
       UPLOAD_MAX_FILESIZE: "1G"
       UPLOAD_MAX_FILES: "100"
       UPLOAD_LIMIT_IPS: "127.0.0.1"
@@ -151,11 +151,11 @@ volumes:
 - clone the repo or download the sources into the webroot folder
 - configure your webserver to point your domain name to the `./public` folder
 - run `composer install`
-- run `yarn --production` (or `npm install --production`)
-- run `yarn build` (or `npm run build`)
+- run `npm ci`
+- run `npm run build`
 - make sure that the PHP process has write permission on the `./storage` folder
-- generate the Laravel KEY: `php artisan key:generate`
 - run `cp .env.example .env` and edit `.env` to fit your needs
+- generate the Laravel KEY: `php artisan key:generate`
 - (optional) you may create your first user `php artisan fs:user:create`
 - start the Laravel scheduler (it will delete expired bundles of the storage). For example `* * * * * /usr/bin/php /path-to-your-project/artisan schedule:run >> /dev/null 2>&1`
 - (optional) to purge bundles manually, run `php artisan fs:bundle:purge`
@@ -167,18 +167,18 @@ Use your browser to navigate to your domain name (example: files.yourdomain.com)
 
 In order to configure your application, copy the .env.example file into .env. Then edit the .env file.
 
-| Configuration | Description |
+| Configuration | Description |
 | ------------- | ----------- |
 | `APP_NAME`    | the title of the application |
-| `APP_ENV`     | change this to `production` when in production (`local` otherwise) |
+| `APP_ENV`     | change this to `production` when in production (`local` otherwise) |
 | `APP_DEBUG` | change this to `false` when in production (`true` otherwise) |
 | `APP_TIMEZONE` | change this to your current timezone |
-| `APP_LOCALE` | change this to "fr", "en", "de" or "kr" |
+| `APP_LOCALE` | change this to "fr", "en", "de" or "kr" |
 | `UPLOAD_PREVENT_DUPLICATES` | Should the app block duplicate files (true / false) |
 | `HASH_MAX_FILESIZE`| max size for hashing file to check for duplicate files. If files are bigger than limit, they will not be hashed. Find the best value for better cpu / memory consumption |
 | `UPLOAD_MAX_FILES` | (*optional*) maximal number of files per bundle |
-| `UPLOAD_MAX_FILESIZE` | (*optional*) change this to the value you want (K, M, G, T, ...). Attention : you must configure your PHP settings too (`post_max_size`, `upload_max_filesize` and `memory_limit`). When missing, using PHP lowest configuration |
-| `UPLOAD_LIMIT_IPS` | (*optional*) a comma separated list of IPs from which you may upload files. Different formats are supported : Full IP address (192.168.10.2), Wildcard format (192.168.10.*), CIDR Format (192.168.10/24 or 1.2.3.4/255.255.255.0) or Start-end IP (192.168.10.0-192.168.10.10). When missing, filtering is disabled. |
+| `UPLOAD_MAX_FILESIZE` | (*optional*) change this to the value you want (K, M, G, T, ...). Attention : you must configure your PHP settings too (`post_max_size`, `upload_max_filesize` and `memory_limit`). When missing, using PHP lowest configuration |
+| `UPLOAD_LIMIT_IPS` | (*optional*) a comma separated list of IPs from which you may upload files. Different formats are supported : Full IP address (192.168.10.2), Wildcard format (192.168.10.*), CIDR Format (192.168.10/24 or 1.2.3.4/255.255.255.0) or Start-end IP (192.168.10.0-192.168.10.10). When missing, filtering is disabled. |
 | `LIMIT_DOWNLOAD_RATE` | (*optional*) if set, limit the download rate. For instance, you may set `LIMIT_DOWNLOAD_RATE=100K` to limit download rate to 100Ko/s |
 
 
@@ -198,18 +198,26 @@ If you are using Nginx, you might be required to do additional setup in order to
 
 ## Development
 
-If your want to modify the sources, you can use the Laravel Mix features:
+To modify the sources, use Vite for frontend asset compilation:
 - configure your domain name. For example: files.yourdomain.com
 - clone the repo or download the sources into the webroot folder
 - configure your webserver to point your domain name to the public/ folder
-- run a `composer install`
-- run a `yarn install`
-- run a `yarn dev` in order to recompile the assets when changed
+- run `composer install`
+- run `npm install`
+- run `npm run dev` to recompile assets when changed
+
+### Testing
+
+Run the test suite and linter:
+
+```
+composer test
+composer lint
+```
 
 ## Roadmap / Ideas / Improvements
 
 There are many ideas to come. You are welcome to **participate**.
-- add PHP unit testing
 - more testing on heavy files
 - background process for creating Zips asynchronously after completion of the bundle
 - invitation to external users to upload file into existing bundle 
@@ -225,7 +233,7 @@ GPLv3
 | Distribution    | License and copyright notice  | Warranty    |
 | Modification    | Same license                  |             |
 | Patent use      |  State changes                |             |
-| Private use     |                               |             |
+| Private use     |                               |             |
 
 https://choosealicense.com/licenses/gpl-3.0/
 

@@ -2,86 +2,90 @@
 
 namespace App\Helpers;
 
+use App\Models\User;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use App\Models\User;
-use Carbon\Carbon;
 
-class Auth {
+class Auth
+{
+    public static function isLogged(): bool
+    {
+        // Checking credentials auth
+        if (session()->get('authenticated', false) === true && session()->has('username')) {
+            // If user still exists
+            try {
+                self::getUserDetails(session()->get('username'));
 
-	static function isLogged():Bool {
-		// Checking credentials auth
-		if (session()->get('authenticated', false) === true && session()->has('username')) {
-			// If user still exists
-			try {
-				self::getUserDetails(session()->get('username'));
-				return true;
-			}
-			catch (Exception $e) {}
-		}
-		return false;
-	}
+                return true;
+            } catch (Exception $e) {
+            }
+        }
 
-	static function loginUser(String $username, String $password):Bool {
-		try {
-			// Checking user existence
-			$user = self::getUserDetails($username);
+        return false;
+    }
 
-			// Checking password
-			if (true !== Hash::check($password, $user->password)) {
-				throw new Exception('Invalid password');
-			}
+    public static function loginUser(string $username, string $password): bool
+    {
+        try {
+            // Checking user existence
+            $user = self::getUserDetails($username);
 
-			// OK, user's credentials are OK
-			session()->put('username', $username);
-			session()->put('authenticated', true);
+            // Checking password
+            if (Hash::check($password, $user->password) !== true) {
+                throw new Exception('Invalid password');
+            }
 
-			$user->connected_at = Carbon::now();
-			$user->save();
+            // OK, user's credentials are OK
+            session()->put('username', $username);
+            session()->put('authenticated', true);
 
-			return true;
-		}
-		catch (Exception $e) {
-			throw $e;
-		}
-	}
+            $user->connected_at = Carbon::now();
+            $user->save();
 
-	static function getLoggedUserDetails():User {
-		if (self::isLogged()) {
-			return self::getUserDetails(session()->get('username'));
-		}
-		throw new UnauthenticatedUser('User is not logged in');
-	}
+            return true;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
 
-	static function getUserDetails(String $username):User {
-		$user = User::find($username);
-		if (empty($user)) {
-			throw new Exception('No such user');
-		}
+    public static function getLoggedUserDetails(): User
+    {
+        if (self::isLogged()) {
+            return self::getUserDetails(session()->get('username'));
+        }
+        throw new UnauthenticatedUser('User is not logged in');
+    }
 
-		return $user;
-	}
+    public static function getUserDetails(string $username): User
+    {
+        $user = User::find($username);
+        if (empty($user)) {
+            throw new Exception('No such user');
+        }
 
-	static function setUserDetails(String $username, Array $data):Array {
-		$original = self::getUserDetails($username);
-		$updated = array_merge($original, $data);
+        return $user;
+    }
 
-		if (Storage::disk('users')->put($username.'.json', json_encode($updated))) {
-			return $updated;
-		}
+    public static function setUserDetails(string $username, array $data): array
+    {
+        $original = self::getUserDetails($username);
+        $updated = array_merge($original, $data);
 
-		throw new Exception('Could not update user\'s details');
-	}
+        if (Storage::disk('users')->put($username.'.json', json_encode($updated))) {
+            return $updated;
+        }
 
-	static function logout() {
-		if (self::isLogged()) {
-			session()->invalidate();
-		}
-	}
+        throw new Exception('Could not update user\'s details');
+    }
+
+    public static function logout()
+    {
+        if (self::isLogged()) {
+            session()->invalidate();
+        }
+    }
 }
 
-
 class UnauthenticatedUser extends Exception {}
-
-?>

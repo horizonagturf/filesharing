@@ -28,18 +28,16 @@ class DeleteUser extends Command
     public function handle()
     {
         $user = User::where('username', $this->argument('login'))->first();
-		if (empty($user)) {
-			$this->error('No such user "'.$this->argument('login').'"');
-		}
-		else {
-			try {
-				$user->delete();
-				$this->info('User "'.$this->argument('login').'" has been deleted');
-			}
-			catch (Exception $e) {
-				$this->error('Could not delete user "'.$this->argument('login').'"');
-			}
-		}
+        if (empty($user)) {
+            $this->error('No such user "'.$this->argument('login').'"');
+        } else {
+            try {
+                $user->delete();
+                $this->info('User "'.$this->argument('login').'" has been deleted');
+            } catch (Exception $e) {
+                $this->error('Could not delete user "'.$this->argument('login').'"');
+            }
+        }
 
     }
 }

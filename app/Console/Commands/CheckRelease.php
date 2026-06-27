@@ -26,42 +26,40 @@ class CheckRelease extends Command
      */
     public function handle()
     {
-		$releases = [];
+        $releases = [];
 
-		$this->newLine();
+        $this->newLine();
         if (! $xml = @simplexml_load_file('https://github.com/axeloz/filesharing/releases.atom')) {
-			$this->error(' Unable to fetch the releases ');
-		}
-		else {
-			foreach ($xml->entry as $e) {
+            $this->error(' Unable to fetch the releases ');
+        } else {
+            foreach ($xml->entry as $e) {
 
-				// Looking for the release link
-				foreach ($e->link->attributes() as $k => $a) {
-					if ($k == 'href') {
-						$href = $a;
-					}
-				}
+                // Looking for the release link
+                foreach ($e->link->attributes() as $k => $a) {
+                    if ($k == 'href') {
+                        $href = $a;
+                    }
+                }
 
-				// Adding the info
-				array_push($releases, [
-					'version'		=> $e->title,
-					'updated_at'	=> (new Carbon($e->updated))->diffForHumans(),
-					'link'			=> $href ?? null
-				]);
-			}
+                // Adding the info
+                array_push($releases, [
+                    'version' => $e->title,
+                    'updated_at' => (new Carbon($e->updated))->diffForHumans(),
+                    'link' => $href ?? null,
+                ]);
+            }
 
-			// Displaying the releases
-			if (count($releases) > 0) {
-				$this->table([
-					'Version', 'Updated', 'Link'
-					], $releases
-				);
-			}
-			else {
-				$this->error(' No release found ');
-			}
-		}
+            // Displaying the releases
+            if (count($releases) > 0) {
+                $this->table([
+                    'Version', 'Updated', 'Link',
+                ], $releases
+                );
+            } else {
+                $this->error(' No release found ');
+            }
+        }
 
-		$this->newLine();
+        $this->newLine();
     }
 }

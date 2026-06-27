@@ -1,5 +1,9 @@
 <?php
 
+use App\Helpers\Upload;
+use App\Providers\AppServiceProvider;
+use App\Providers\AuthServiceProvider;
+use App\Providers\EventServiceProvider;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\ServiceProvider;
 
@@ -98,17 +102,17 @@ return [
 
     'fallback_locale' => 'en',
 
-	/*
-	|--------------------------------------------------------------------------
-	| Application supported locales
-	|--------------------------------------------------------------------------
-	|
-	| List of all the supported locales of this application
-	|
-	*/
-	'supported_locales' => [
-		'en', 'fr'
-	],
+    /*
+    |--------------------------------------------------------------------------
+    | Application supported locales
+    |--------------------------------------------------------------------------
+    |
+    | List of all the supported locales of this application
+    |
+    */
+    'supported_locales' => [
+        'en', 'fr',
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -169,17 +173,11 @@ return [
 
     'providers' => ServiceProvider::defaultProviders()->merge([
         /*
-         * Package Service Providers...
-         */
-
-        /*
          * Application Service Providers...
          */
-        App\Providers\AppServiceProvider::class,
-        App\Providers\AuthServiceProvider::class,
-        // App\Providers\BroadcastServiceProvider::class,
-        App\Providers\EventServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
+        AppServiceProvider::class,
+        AuthServiceProvider::class,
+        EventServiceProvider::class,
     ])->toArray(),
 
     /*
@@ -195,7 +193,7 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         // 'Example' => App\Facades\Example::class,
-            'Upload'    => App\Helpers\Upload::class
+        'Upload' => Upload::class,
     ])->toArray(),
 
 ];

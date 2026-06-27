@@ -1,59 +1,32 @@
 <?php
 
+use App\Http\Controllers\BundleController;
+use App\Http\Controllers\UploadController;
+use App\Http\Controllers\WebController;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\WebController;
-use App\Http\Controllers\UploadController;
-use App\Http\Controllers\BundleController;
-use App\Http\Middleware\UploadAccess;
+Route::get('/login', [WebController::class, 'login'])->name('login');
+Route::post('/login', [WebController::class, 'doLogin'])->name('login.post');
+Route::get('/logout', [WebController::class, 'logout'])->name('logout');
 
+Route::middleware(['can.upload'])->group(function () {
+    Route::get('/', [WebController::class, 'homepage'])->name('homepage');
+    Route::post('/new', [WebController::class, 'newBundle'])->name('bundle.new');
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+    Route::prefix('/upload/{bundle}')->name('upload.')->group(function () {
+        Route::get('/', [UploadController::class, 'createBundle'])->name('create.show');
 
-
-/**
-Public route for login
-*/
-Route::controller(WebController::class)->group(function() {
-	Route::get('/login', 'login')->name('login');
-	Route::post('/login', 'doLogin')->name('login.post');
-	Route::get('/logout', 'logout')->name('logout');
+        Route::middleware(['access.owner'])->group(function () {
+            Route::post('/', [UploadController::class, 'storeBundle'])->name('create.store');
+            Route::post('/file', [UploadController::class, 'uploadFile'])->name('file.store');
+            Route::delete('/file', [UploadController::class, 'deleteFile'])->name('file.delete');
+            Route::post('/complete', [UploadController::class, 'completeBundle'])->name('complete');
+            Route::delete('/delete', [UploadController::class, 'deleteBundle'])->name('bundle.delete');
+        });
+    });
 });
 
-/**
-Upload routes
-*/
-Route::middleware(['can.upload'])->group(function() {
-	Route::get('/', [WebController::class, 'homepage'])->name('homepage');
-	Route::post('/new', [WebController::class, 'newBundle'])->name('bundle.new');
-
-	Route::prefix('/upload/{bundle}')->controller(UploadController::class)->name('upload.')->group(function() {
-		Route::get('/', 'createBundle')->name('create.show');
-
-		Route::middleware(['access.owner'])->group(function() {
-			Route::post('/', 'storeBundle')->name('create.store');
-			Route::post('/file', 'uploadFile')->name('file.store');
-			Route::delete('/file', 'deleteFile')->name('file.delete');
-			Route::post('/complete', 'completeBundle')->name('complete');
-			Route::delete('/delete', 'deleteBundle')->name('bundle.delete');
-		});
-	});
-
-});
-
-/**
-Download routes
-*/
-Route::middleware(['access.guest'])->prefix('/bundle/{bundle}')->controller(BundleController::class)->name('bundle.')->group(function() {
-	Route::get('/preview', 'previewBundle')->name('preview');
-	Route::get('/download', 'downloadZip')->name('zip.download');
+Route::middleware(['access.guest'])->prefix('/bundle/{bundle}')->name('bundle.')->group(function () {
+    Route::get('/preview', [BundleController::class, 'previewBundle'])->name('preview');
+    Route::get('/download', [BundleController::class, 'downloadZip'])->name('zip.download');
 });

@@ -34,7 +34,7 @@
 							bundle.label = bundle.title
 						}
 
-						if (bundle.expires_at != null && moment(bundle.expires_at).isBefore(moment())) {
+						if (bundle.expires_at != null && dayjs(bundle.expires_at).isBefore(dayjs())) {
 							this.expired.push(bundle)
 						}
 						else if (bundle.completed == true) {
@@ -43,7 +43,7 @@
 						else {
 							this.pending.push(bundle)
 						}
-						bundle.label += ' - {{ __('app.created-at') }} '+moment(bundle.created_at).fromNow()
+						bundle.label += ' - {{ __('app.created-at') }} '+dayjs(bundle.created_at).fromNow()
 					})
 				}
 			},
@@ -86,7 +86,7 @@
 					return false;
 				}
 
-				return moment.unix(this.metadata.expires_at).isBefore(moment())
+				return dayjs.unix(this.metadata.expires_at).isBefore(dayjs())
 			},
 		}))
 	})

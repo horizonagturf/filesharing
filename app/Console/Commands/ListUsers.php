@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 class ListUsers extends Command
 {
@@ -28,11 +27,11 @@ class ListUsers extends Command
     public function handle()
     {
         $users = User::get();
-		$this->table([
-			'username',
-			'connected_at',
-			'created_at',
-			'updated_at'
-		], $users);
+        $this->table([
+            'username',
+            'connected_at',
+            'created_at',
+            'updated_at',
+        ], $users);
     }
 }

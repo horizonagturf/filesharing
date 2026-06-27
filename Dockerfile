@@ -1,58 +1,63 @@
-FROM php:8.2-apache
-MAINTAINER axeloz
+# syntax=docker/dockerfile:1
+
+FROM node:22-alpine AS frontend
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY vite.config.js postcss.config.cjs tailwind.config.js ./
+COPY resources ./resources
+COPY public ./public
+
+RUN npm run build
+
+FROM composer:2 AS vendor
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --optimize-autoloader --no-scripts
+
+FROM php:8.3-apache AS runtime
+
+LABEL maintainer="axeloz"
 
 SHELL ["/bin/bash", "-c"]
 
-# INSTALLING SYSTEM DEPENDENCIES
-RUN apt-get update -y
-RUN apt-get install -y libmcrypt-dev libonig-dev build-essential libxml2-dev \
-	libzip-dev gnupg unzip curl wget findutils tar grep nano cron \
-	nodejs npm
-
-# INSTALLING PHP DEPENDENCIES
-RUN docker-php-ext-install \
+RUN apt-get update -y && apt-get install -y \
+	libonig-dev \
+	libxml2-dev \
+	libzip-dev \
+	cron \
+	&& docker-php-ext-install \
 	bcmath \
 	ctype \
 	fileinfo \
 	mbstring \
 	opcache \
 	xml \
-	zip
+	zip \
+	&& a2enmod rewrite \
+	&& rm -rf /var/lib/apt/lists/*
 
-# ADDING VHOST
 COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
-RUN a2enmod rewrite
 
-# ADDING COMPOSER
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# SETTING WORKDIR AND ENV
-ENV WEB_DOCUMENT_ROOT=/app/public
-ENV APP_ENV=production
 COPY . /app
 WORKDIR /app
 
+COPY --from=vendor /app/vendor ./vendor
+COPY --from=frontend /app/public/build ./public/build
 
-# INSTALLING THE CRONTAB
-RUN { echo "* * * * * php /app/artisan schedule:run >> /dev/null 2>&1"; } | crontab -
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
+	&& chmod +x /app/.docker/entrypoint.sh
 
-# INSTALLING COMPOSER DEPENDENCIES
-RUN composer update --no-interaction --optimize-autoloader --no-dev
-RUN chown -R www-data:www-data /app
+RUN echo "* * * * * www-data php /app/artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/filesharing \
+	&& chmod 0644 /etc/cron.d/filesharing
 
-# SETUP OF FILESHARING
-RUN cp .docker/.env .
-RUN php artisan key:generate --force
-RUN php artisan route:cache
-RUN php artisan view:cache
-RUN php artisan orbit:clear
-
-# INSTALLING YARN DEPENDENCIES AND BUILDING
-RUN npm i
-RUN npm run build
-
-# EXPOSING VOLUME
 VOLUME /app/storage
 
-# EXPOSING PORT
 EXPOSE 80
+
+ENTRYPOINT ["/app/.docker/entrypoint.sh"]

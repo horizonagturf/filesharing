@@ -3,9 +3,6 @@
 @section('page_title', __('app.upload-files-title'))
 
 @push('scripts')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
-<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
-
 <script>
 
 	let baseUrl		= @js($baseUrl);
@@ -191,7 +188,7 @@
 							filesize: file.size,
 							fullpath: '',
 							filename: file.name,
-							created_at: moment().unix(),
+							created_at: dayjs().unix(),
 							status: 'uploading'
 						});
 
@@ -395,7 +392,7 @@
 					return false;
 				}
 
-				return moment.unix(this.bundle.expires_at).isBefore(moment())
+				return dayjs.unix(this.bundle.expires_at).isBefore(dayjs())
 			}
 		}))
 	})
