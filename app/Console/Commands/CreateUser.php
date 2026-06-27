@@ -4,9 +4,9 @@ namespace App\Console\Commands;
 
 use App\Enums\UserRole;
 use App\Models\User;
-use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use Throwable;
 
 class CreateUser extends Command
 {
@@ -55,14 +55,13 @@ class CreateUser extends Command
         }
 
         try {
-            $user = User::create([
+            User::createWithRoles([
                 'username' => $login,
                 'password' => Hash::make($password),
-            ]);
-            $user->syncRoles([UserRole::from($roleInput)]);
+            ], [UserRole::from($roleInput)]);
 
             $this->info('User has been created');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->error('An error occurred, could not create user');
 
             return self::FAILURE;

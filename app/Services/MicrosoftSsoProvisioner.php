@@ -26,7 +26,7 @@ class MicrosoftSsoProvisioner
             ->first();
 
         if ($user === null) {
-            $user = User::create([
+            return User::createWithRoles([
                 'username' => $this->deriveUsername($email),
                 'name' => $name,
                 'email' => $email,
@@ -34,10 +34,7 @@ class MicrosoftSsoProvisioner
                 'password' => null,
                 'requires_approval' => null,
                 'last_login_at' => now(),
-            ]);
-            $user->assignRole(UserRole::User);
-
-            return $user;
+            ], [UserRole::User]);
         }
 
         $user->update([

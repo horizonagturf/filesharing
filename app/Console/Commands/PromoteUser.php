@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Console\Command;
+use InvalidArgumentException;
 
 class PromoteUser extends Command
 {
@@ -22,10 +23,13 @@ class PromoteUser extends Command
             $identifier = $this->ask('Enter the user\'s username or email');
         }
 
-        $user = User::query()
-            ->where('username', $identifier)
-            ->orWhere('email', $identifier)
-            ->first();
+        try {
+            $user = User::findByUsernameOrEmail($identifier);
+        } catch (InvalidArgumentException $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
 
         if ($user === null) {
             $this->error('No user found for "'.$identifier.'"');

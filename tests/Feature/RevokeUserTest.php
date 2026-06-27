@@ -48,4 +48,18 @@ class RevokeUserTest extends TestCase
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('does not have role', Artisan::output());
     }
+
+    public function test_revoke_fails_when_identifier_matches_multiple_users(): void
+    {
+        User::factory()->admin()->create(['username' => 'alice']);
+        User::factory()->create(['email' => 'alice']);
+
+        $exitCode = Artisan::call('fs:user:revoke', [
+            'user' => 'alice',
+            '--role' => 'admin',
+        ]);
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringContainsString('matches multiple users', Artisan::output());
+    }
 }

@@ -26,6 +26,8 @@ class ManageBranding extends Page implements HasForms
 
     public ?array $data = [];
 
+    public bool $hadLogoInForm = false;
+
     public function mount(BrandingSettings $branding): void
     {
         $settings = $branding->all();
@@ -39,6 +41,8 @@ class ManageBranding extends Page implements HasForms
             'tos_url' => $settings[BrandingSettings::KEY_TOS_URL] ?? '',
             'privacy_url' => $settings[BrandingSettings::KEY_PRIVACY_URL] ?? '',
         ]);
+
+        $this->hadLogoInForm = filled($this->data['logo_path'] ?? null);
     }
 
     public function form(Form $form): Form
@@ -98,7 +102,13 @@ class ManageBranding extends Page implements HasForms
         }
 
         $branding->set(BrandingSettings::KEY_APP_NAME, $data['app_name'] ?: null);
-        $branding->set(BrandingSettings::KEY_LOGO_PATH, $logoPath ?: null);
+
+        if (filled($logoPath)) {
+            $branding->set(BrandingSettings::KEY_LOGO_PATH, $logoPath);
+        } elseif ($this->hadLogoInForm) {
+            $branding->set(BrandingSettings::KEY_LOGO_PATH, null);
+        }
+
         $branding->set(BrandingSettings::KEY_PRIMARY_COLOR, $data['primary_color']);
         $branding->set(BrandingSettings::KEY_ACCENT_COLOR, $data['accent_color']);
         $branding->set(BrandingSettings::KEY_FOOTER_TEXT, $data['footer_text'] ?: null);
