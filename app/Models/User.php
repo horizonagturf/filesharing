@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
@@ -39,6 +40,47 @@ class User extends Authenticatable implements FilamentUser
             'requires_approval' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @throws InvalidArgumentException when the identifier matches more than one user
+     */
+    public static function findByUsernameOrEmail(string $identifier): ?self
+    {
+        $users = static::query()
+            ->where(function ($query) use ($identifier) {
+                $query->where('username', $identifier)
+                    ->orWhere('email', $identifier);
+            })
+            ->get();
+
+        if ($users->isEmpty()) {
+            return null;
+        }
+
+        if ($users->count() > 1) {
+            throw new InvalidArgumentException(sprintf(
+                'Identifier "%s" matches multiple users (%s). Use a unique username or email.',
+                $identifier,
+                $users->pluck('username')->implode(', '),
+            ));
+        }
+
+        return $users->first();
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<UserRole|string>  $roles
+     */
+    public static function createWithRoles(array $attributes, array $roles): self
+    {
+        return DB::transaction(function () use ($attributes, $roles) {
+            $user = static::create($attributes);
+            $user->syncRoles($roles);
+
+            return $user;
+        });
     }
 
     public function bundles(): HasMany

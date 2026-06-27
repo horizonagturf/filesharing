@@ -6,6 +6,7 @@ use App\Filament\Pages\ManageBranding;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\BrandingSettings;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -82,5 +83,41 @@ class AdminBrandingTest extends TestCase
         $this->assertFalse(
             Setting::query()->where('key', BrandingSettings::KEY_SHOW_CREDIT)->exists()
         );
+    }
+
+    public function test_saving_other_fields_does_not_clear_existing_logo(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $branding = app(BrandingSettings::class);
+        $branding->set(BrandingSettings::KEY_LOGO_PATH, 'branding/existing-logo.png');
+
+        Livewire::actingAs($admin)
+            ->test(ManageBranding::class)
+            ->fillForm(['app_name' => 'Updated Name'])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertNotified();
+
+        $this->assertSame('branding/existing-logo.png', $branding->get(BrandingSettings::KEY_LOGO_PATH));
+        $this->assertSame('Updated Name', $branding->appName());
+    }
+
+    public function test_admin_can_clear_existing_logo(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('branding/existing-logo.png', 'fake-image');
+
+        $admin = User::factory()->admin()->create();
+        $branding = app(BrandingSettings::class);
+        $branding->set(BrandingSettings::KEY_LOGO_PATH, 'branding/existing-logo.png');
+
+        Livewire::actingAs($admin)
+            ->test(ManageBranding::class)
+            ->fillForm(['logo_path' => null])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertNotified();
+
+        $this->assertNull($branding->get(BrandingSettings::KEY_LOGO_PATH));
     }
 }

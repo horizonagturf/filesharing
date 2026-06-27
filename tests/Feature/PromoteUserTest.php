@@ -89,4 +89,18 @@ class PromoteUserTest extends TestCase
         $this->assertTrue($user->hasRole(UserRole::Admin));
         $this->assertTrue($user->hasRole(UserRole::Reviewer));
     }
+
+    public function test_promote_fails_when_identifier_matches_multiple_users(): void
+    {
+        User::factory()->create(['username' => 'alice']);
+        User::factory()->create(['email' => 'alice']);
+
+        $exitCode = Artisan::call('fs:user:promote', [
+            'user' => 'alice',
+            '--role' => 'admin',
+        ]);
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringContainsString('matches multiple users', Artisan::output());
+    }
 }
