@@ -56,6 +56,23 @@ class MicrosoftSsoProvisionerTest extends TestCase
         $this->assertNotNull($user->last_login_at);
     }
 
+    public function test_preserves_existing_name_when_azure_returns_empty_string(): void
+    {
+        $existing = User::factory()->create([
+            'username' => 'existing',
+            'email' => 'existing@yourcompany.com',
+            'azure_oid' => 'oid-existing',
+            'name' => 'Old Name',
+        ]);
+
+        $azureUser = $this->makeAzureUser('existing@yourcompany.com', 'oid-existing', '');
+
+        $user = app(MicrosoftSsoProvisioner::class)->provision($azureUser);
+
+        $this->assertSame($existing->id, $user->id);
+        $this->assertSame('Old Name', $user->name);
+    }
+
     public function test_links_existing_user_by_email(): void
     {
         $existing = User::factory()->create([
@@ -70,6 +87,23 @@ class MicrosoftSsoProvisionerTest extends TestCase
 
         $this->assertSame($existing->id, $user->id);
         $this->assertSame('oid-linked', $user->azure_oid);
+    }
+
+    public function test_links_existing_user_by_email_with_legacy_mixed_case(): void
+    {
+        $existing = User::factory()->create([
+            'username' => 'legacyuser',
+            'email' => 'Legacy@YourCompany.com',
+            'azure_oid' => null,
+        ]);
+
+        $azureUser = $this->makeAzureUser('legacy@yourcompany.com', 'oid-linked');
+
+        $user = app(MicrosoftSsoProvisioner::class)->provision($azureUser);
+
+        $this->assertSame($existing->id, $user->id);
+        $this->assertSame('oid-linked', $user->azure_oid);
+        $this->assertSame('legacy@yourcompany.com', $user->email);
     }
 
     public function test_updates_existing_user_by_azure_oid_when_email_changed_in_azure(): void

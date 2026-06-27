@@ -22,7 +22,7 @@ class MicrosoftSsoProvisioner
         $name = $azureUser->getName();
 
         $userByOid = User::query()->where('azure_oid', $azureOid)->first();
-        $userByEmail = User::query()->where('email', $email)->first();
+        $userByEmail = $this->findUserByEmail($email);
 
         $user = $this->resolveExistingUser($userByOid, $userByEmail);
 
@@ -44,11 +44,18 @@ class MicrosoftSsoProvisioner
         $user->update([
             'azure_oid' => $azureOid,
             'email' => $email,
-            'name' => $name ?? $user->name,
+            'name' => filled($name) ? $name : $user->name,
             'last_login_at' => now(),
         ]);
 
         return $user->fresh();
+    }
+
+    private function findUserByEmail(string $email): ?User
+    {
+        return User::query()
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->first();
     }
 
     private function resolveExistingUser(?User $userByOid, ?User $userByEmail): ?User
