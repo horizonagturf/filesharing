@@ -13,6 +13,17 @@
 			expired: [],
 			currentBundle: null,
 			ownerToken: null,
+			parseExpiresAt: function(expiresAt) {
+				if (expiresAt == null || expiresAt === '') {
+					return null
+				}
+
+				if (typeof expiresAt === 'number' || (typeof expiresAt === 'string' && /^\d+$/.test(expiresAt))) {
+					return dayjs.unix(Number(expiresAt))
+				}
+
+				return dayjs(expiresAt)
+			},
 
 			init: function() {
 				// Generating anonymous owner token
@@ -34,7 +45,8 @@
 							bundle.label = bundle.title
 						}
 
-						if (bundle.expires_at != null && dayjs(bundle.expires_at).isBefore(dayjs())) {
+						const expiresAt = this.parseExpiresAt(bundle.expires_at)
+						if (expiresAt != null && expiresAt.isValid() && expiresAt.isBefore(dayjs())) {
 							this.expired.push(bundle)
 						}
 						else if (bundle.completed == true) {
@@ -81,12 +93,13 @@
 				}
 			},
 
-			isBundleExpired: function() {
-				if (this.metadata.expires_at == null || this.metadata.expires_at == '') {
+			isBundleExpired: function(bundle = null) {
+				const expiresAt = this.parseExpiresAt(bundle?.expires_at)
+				if (expiresAt == null || ! expiresAt.isValid()) {
 					return false;
 				}
 
-				return dayjs.unix(this.metadata.expires_at).isBefore(dayjs())
+				return expiresAt.isBefore(dayjs())
 			},
 		}))
 	})

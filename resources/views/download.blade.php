@@ -24,19 +24,37 @@
 				}, 5000)
 
 			},
+			parseExpiresAt: function(expiresAt) {
+				if (expiresAt == null || expiresAt === '') {
+					return null
+				}
+
+				if (typeof expiresAt === 'number' || (typeof expiresAt === 'string' && /^\d+$/.test(expiresAt))) {
+					return dayjs.unix(Number(expiresAt))
+				}
+
+				return dayjs(expiresAt)
+			},
 
 			updateTimes: function() {
 				this.created_at = dayjs(this.metadata.created_at).fromNow()
 
 				if (this.metadata.expiry) {
 					if (! this.isExpired()) {
-						this.expires_at = dayjs(this.metadata.expires_at).fromNow()
+						const expiresAt = this.parseExpiresAt(this.metadata.expires_at)
+						this.expires_at = expiresAt != null && expiresAt.isValid() ? expiresAt.fromNow() : null
 					}
 				}
 			},
 
 			isExpired: function() {
-				if (dayjs().isAfter(dayjs.unix(this.metadata.expires_at))) {
+				const expiresAt = this.parseExpiresAt(this.metadata.expires_at)
+				if (expiresAt == null || ! expiresAt.isValid()) {
+					this.expired = false
+					return false
+				}
+
+				if (dayjs().isAfter(expiresAt)) {
 					this.expired = true
 					return true
 				}
