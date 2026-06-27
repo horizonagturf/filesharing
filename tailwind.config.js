@@ -10,11 +10,11 @@ module.exports = {
         'display': ['Comfortaa'],
         'title': ['Rajdhani']
     },
-    extend: {
+        extend: {
         colors: {
-            'primary': 'rgb(126 34 206)',
-            'primary-light': 'rgb(147 51 234)',
-            'primary-superlight': 'rgb(216 180 254)'
+            'primary': 'rgb(var(--color-primary, 126 34 206) / <alpha-value>)',
+            'primary-light': 'rgb(var(--color-primary-light, 147 51 234) / <alpha-value>)',
+            'primary-superlight': 'rgb(var(--color-primary-superlight, 216 180 254) / <alpha-value>)'
         },
     },
   },

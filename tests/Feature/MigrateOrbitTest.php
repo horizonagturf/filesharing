@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\BundleStatus;
+use App\Enums\UserRole;
 use App\Models\Bundle;
 use App\Models\File;
 use App\Models\User;
@@ -64,6 +65,7 @@ class MigrateOrbitTest extends TestCase
 
         $user = User::where('username', 'alice')->first();
         $this->assertNotNull($user);
+        $this->assertNull($user->last_login_at);
 
         $bundle = Bundle::where('slug', 'testbundle')->first();
         $this->assertNotNull($bundle);
@@ -88,5 +90,25 @@ class MigrateOrbitTest extends TestCase
         Artisan::call('fs:migrate:orbit', ['--path' => $this->orbitPath]);
 
         $this->assertSame(1, User::where('username', 'bob')->count());
+    }
+
+    public function test_force_import_preserves_existing_sql_role(): void
+    {
+        User::create([
+            'username' => 'charlie',
+            'password' => 'existing-hash',
+            'role' => UserRole::Reviewer,
+        ]);
+
+        Filesystem::put($this->orbitPath.'/users/charlie.json', json_encode([
+            'username' => 'charlie',
+            'password' => 'orbit-hash',
+        ]));
+
+        Artisan::call('fs:migrate:orbit', ['--path' => $this->orbitPath, '--force' => true]);
+
+        $user = User::where('username', 'charlie')->first();
+        $this->assertNotNull($user);
+        $this->assertSame(UserRole::Reviewer, $user->role);
     }
 }

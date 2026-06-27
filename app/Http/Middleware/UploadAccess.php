@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use App\Helpers\Auth;
 use App\Helpers\Upload;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class UploadAccess
@@ -17,21 +17,18 @@ class UploadAccess
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Checking IP based access
         if (Upload::canUpload($request->ip()) === true) {
             return $next($request);
         }
 
-        // Checking credentials auth
-        if (Auth::isLogged()) {
+        if (Auth::check()) {
             return $next($request);
         }
 
-        // Fallback, authentication required
         if ($request->ajax()) {
             abort(401);
-        } else {
-            return response()->view('login');
         }
+
+        return response()->view('login');
     }
 }

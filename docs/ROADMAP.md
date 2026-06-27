@@ -213,49 +213,50 @@ User override always wins over group. Any group requiring approval wins over def
 
 ### Tickets
 
-- [ ] **P2-1** User roles
-  - Column: `role` enum `user`, `reviewer`, `admin`
+- [x] **P2-1** User roles
+  - `roles` table + `role_user` pivot; slugs `user`, `reviewer`, `admin`
+  - Users may hold multiple roles; every account retains at least `user`
   - Middleware: `role:admin`, `role:reviewer`
   - **Done when:** Role middleware blocks unauthorized routes
 
-- [ ] **P2-2** Groups table
+- [x] **P2-2** Groups table
   - `groups`: `id`, `name`, `slug`, `requires_approval`, `allow_static_links`
   - **Done when:** Groups CRUD via migration/seed
 
-- [ ] **P2-3** User ↔ group pivot
+- [x] **P2-3** User ↔ group pivot
   - `group_user` many-to-many
   - **Done when:** User can belong to multiple groups
 
-- [ ] **P2-4** Per-user approval override
+- [x] **P2-4** Per-user approval override
   - `users.requires_approval` nullable boolean
   - `null` = inherit from groups
   - **Done when:** Column + model accessor documented
 
-- [ ] **P2-5** `ApprovalPolicy` service
+- [x] **P2-5** `ApprovalPolicy` service
   - `ApprovalPolicy::requiresApproval(User $user): bool`
   - Unit tests for: user override, group flag, env default, combined cases
   - **Done when:** All policy cases tested
 
-- [ ] **P2-6** Reviewer pool helper
-  - `ReviewerPool::all()` → users where `role = reviewer`
+- [x] **P2-6** Reviewer pool helper
+  - `ReviewerPool::all()` → users with `reviewer` role (includes admin+reviewer)
   - **Done when:** Returns correct users
 
-- [ ] **P2-7** User schema for SSO
+- [x] **P2-7** User schema for SSO
   - Columns: `email`, `azure_oid`, `name`, `last_login_at`
   - Unique indexes on `email`, `azure_oid`
   - Relax/remove `alpha_num` username-only model
   - **Done when:** Migration applied
 
-- [ ] **P2-8** Laravel Auth migration
+- [x] **P2-8** Laravel Auth migration
   - Replace `App\Helpers\Auth` with Laravel guard + `Auth::user()`
   - Update `UploadAccess`, `WebController`, views, `BundleResource`
   - **Done when:** Session auth works; helper deprecated or thin wrapper
 
 ### Phase 2 exit criteria
 
-- [ ] `ApprovalPolicy` tested with user override + group + default
-- [ ] Roles enforced by middleware
-- [ ] Laravel Auth is primary auth mechanism
+- [x] `ApprovalPolicy` tested with user override + group + default
+- [x] Roles enforced by middleware
+- [x] Laravel Auth is primary auth mechanism
 
 ---
 
@@ -267,49 +268,49 @@ User override always wins over group. Any group requiring approval wins over def
 
 ### Tickets
 
-- [ ] **P3-1** Install Socialite + Azure provider
+- [x] **P3-1** Install Socialite + Azure provider
   - `laravel/socialite`, `socialiteproviders/microsoft-azure`
   - `config/services.php` azure block
   - **Done when:** Packages installed; config reads env
 
-- [ ] **P3-2** OAuth routes & controller
+- [x] **P3-2** OAuth routes & controller
   - `GET /auth/microsoft` → redirect
   - `GET /auth/microsoft/callback` → handle token
   - **Done when:** OAuth round-trip works in staging
 
-- [ ] **P3-3** JIT user provisioning
+- [x] **P3-3** JIT user provisioning
   - Create/update user from token: `azure_oid`, `email`, `name`
   - Default role: `user`; default groups: none (admin assigns)
   - **Done when:** First login creates user row
 
-- [ ] **P3-4** Tenant & domain lock
+- [x] **P3-4** Tenant & domain lock
   - Reject if token tenant ≠ `AZURE_TENANT_ID`
   - Reject if email domain ∉ `AZURE_ALLOWED_DOMAINS`
   - **Done when:** Wrong tenant/domain gets friendly error
 
-- [ ] **P3-5** Login UI
+- [x] **P3-5** Login UI
   - "Sign in with Microsoft" button
   - Remove password form when `MICROSOFT_SSO_ENABLED=true`
   - **Done when:** Only SSO login in production
 
-- [ ] **P3-6** Disable IP upload bypass when SSO enforced
+- [x] **P3-6** Disable IP upload bypass when SSO enforced
   - Ignore `UPLOAD_LIMIT_IPS` when SSO enabled
   - **Done when:** Unauthenticated users cannot upload
 
-- [ ] **P3-7** Remove routine local password login
+- [x] **P3-7** Remove routine local password login
   - Disable `POST /login` password flow in prod
   - Keep `fs:user:*` CLI for bootstrap role assignment only
   - **Done when:** No password login in prod config
 
-- [ ] **P3-8** SSO feature tests
+- [x] **P3-8** SSO feature tests
   - Mock Socialite: success, wrong tenant, JIT create
   - **Done when:** Tests in CI
 
 ### Phase 3 exit criteria
 
-- [ ] Org user can sign in via Microsoft
-- [ ] External tenant/domain rejected
-- [ ] No local password or IP bypass in production
+- [x] Org user can sign in via Microsoft
+- [x] External tenant/domain rejected
+- [x] No local password or IP bypass in production
 
 ---
 
@@ -323,45 +324,45 @@ User override always wins over group. Any group requiring approval wins over def
 
 ### Tickets
 
-- [ ] **P4-1** Admin panel scaffold
+- [x] **P4-1** Admin panel scaffold
   - `/admin` with `admin` role gate
   - **Done when:** Non-admin gets 403
 
-- [ ] **P4-2** Users management
+- [x] **P4-2** Users management
   - List/search; edit `role`, groups, `requires_approval` override
   - **Done when:** Admin can toggle per-user approval from GUI
 
-- [ ] **P4-3** Groups management
+- [x] **P4-3** Groups management
   - CRUD groups; toggle `requires_approval`, `allow_static_links`
   - Assign members
   - **Done when:** Group approval flag affects `ApprovalPolicy`
 
-- [ ] **P4-4** Bundles list (admin)
+- [x] **P4-4** Bundles list (admin)
   - All shares: owner, status, size, file count, created date
   - Filters: status, user, date range
   - **Done when:** Searchable admin bundle table
 
-- [ ] **P4-5** Bundle detail (admin)
+- [x] **P4-5** Bundle detail (admin)
   - Files, owner, status; actions: revoke, extend expiry, delete
   - **Done when:** Delete removes DB rows + disk files
 
-- [ ] **P4-6** Branding settings
+- [x] **P4-6** Branding settings
   - Keys: app name, logo upload, primary/accent colors, footer text, ToS URL, privacy URL
   - Store in `settings` table
   - **Done when:** Settings persist across requests
 
-- [ ] **P4-7** Runtime theme
+- [x] **P4-7** Runtime theme
   - Inject CSS variables + logo URL in `layout.blade.php`
   - **Done when:** Branding visible without redeploy
 
-- [ ] **P4-8** Reviewer pool view
+- [x] **P4-8** Reviewer pool view
   - Read-only list of `role=reviewer` users
   - **Done when:** Ops can see who receives approval queue
 
 ### Phase 4 exit criteria
 
-- [ ] Admin manages users, groups, approval flags, branding
-- [ ] Admin sees all bundles
+- [x] Admin manages users, groups, approval flags, branding
+- [x] Admin sees all bundles
 
 ---
 
@@ -418,7 +419,7 @@ Upload (draft)
   - **Done when:** Pending bundles have no public links
 
 - [ ] **P5-8** Reviewer notification email
-  - Email all `reviewer` role users on new pending request
+  - Email all users with the `reviewer` role on new pending request (includes users who are also admin)
   - **Done when:** Email received on submit
 
 - [ ] **P5-9** Uploader homepage status
@@ -653,9 +654,9 @@ Update as you go. GitHub issues: [Enterprise Roadmap milestone](https://github.c
 |-------|--------|--------|---------|-----------|-------|
 | P0 — Infrastructure | [#9](https://github.com/horizonagturf/filesharing/issues/9) | `[ ]` | | | |
 | P1 — Database | [#10](https://github.com/horizonagturf/filesharing/issues/10) | `[x]` | 2026-06-27 | 2026-06-27 | Orbit → SQL; `fs:migrate:orbit` |
-| P2 — Roles & policy | [#11](https://github.com/horizonagturf/filesharing/issues/11) | `[ ]` | | | |
-| P3 — Microsoft SSO | [#13](https://github.com/horizonagturf/filesharing/issues/13) | `[ ]` | | | |
-| P4 — Admin & branding | [#12](https://github.com/horizonagturf/filesharing/issues/12) | `[ ]` | | | |
+| P2 — Roles & policy | [#11](https://github.com/horizonagturf/filesharing/issues/11) | `[x]` | 2026-06-27 | 2026-06-27 | Roles, groups, ApprovalPolicy, Laravel Auth |
+| P3 — Microsoft SSO | [#13](https://github.com/horizonagturf/filesharing/issues/13) | `[x]` | 2026-06-27 | 2026-06-27 | Socialite Azure; JIT provisioning; tenant/domain lock |
+| P4 — Admin & branding | [#12](https://github.com/horizonagturf/filesharing/issues/12) | `[x]` | 2026-06-27 | 2026-06-27 | Filament `/admin`; users, groups, bundles, branding, reviewers |
 | P5 — Approval workflow | [#14](https://github.com/horizonagturf/filesharing/issues/14) | `[ ]` | | | |
 | P6 — Invitations & OTP | [#16](https://github.com/horizonagturf/filesharing/issues/16) | `[ ]` | | | |
 | P7 — Audit logging | [#15](https://github.com/horizonagturf/filesharing/issues/15) | `[ ]` | | | |

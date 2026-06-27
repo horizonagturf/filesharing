@@ -1,3 +1,7 @@
+@php
+    $branding = app(\App\Services\BrandingSettings::class);
+    $cssVariables = $branding->cssVariables();
+@endphp
 <html>
 	<head>
 		<meta charset="utf-8">
@@ -5,10 +9,17 @@
 			@hasSection('page_title')
 				@yield('page_title') -
 			@endif
-			{{ config('app.name') }}
+			{{ $branding->appName() }}
 		</title>
-		<meta name="theme-color" content="#319197">
+		<meta name="theme-color" content="{{ $branding->get(\App\Services\BrandingSettings::KEY_PRIMARY_COLOR, '#7e22ce') }}">
 		<meta name="csrf-token" content="{{ csrf_token() }}">
+        <style>
+            :root {
+                @foreach ($cssVariables as $name => $value)
+                {{ $name }}: {{ $value }};
+                @endforeach
+            }
+        </style>
         @vite('resources/css/app.css')
         @stack('styles')
         @vite('resources/js/app.js')

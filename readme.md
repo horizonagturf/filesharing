@@ -178,19 +178,152 @@ In order to configure your application, copy the .env.example file into .env. Th
 | `HASH_MAX_FILESIZE`| max size for hashing file to check for duplicate files. If files are bigger than limit, they will not be hashed. Find the best value for better cpu / memory consumption |
 | `UPLOAD_MAX_FILES` | (*optional*) maximal number of files per bundle |
 | `UPLOAD_MAX_FILESIZE` | (*optional*) change this to the value you want (K, M, G, T, ...). Attention : you must configure your PHP settings too (`post_max_size`, `upload_max_filesize` and `memory_limit`). When missing, using PHP lowest configuration |
-| `UPLOAD_LIMIT_IPS` | (*optional*) a comma separated list of IPs from which you may upload files. Different formats are supported : Full IP address (192.168.10.2), Wildcard format (192.168.10.*), CIDR Format (192.168.10/24 or 1.2.3.4/255.255.255.0) or Start-end IP (192.168.10.0-192.168.10.10). When missing, filtering is disabled. |
+| `UPLOAD_LIMIT_IPS` | (*optional*) Comma-separated IPs allowed to upload without login. Ignored when `MICROSOFT_SSO_ENABLED=true`. Different formats supported: full IP (192.168.10.2), wildcard (192.168.10.*), CIDR (192.168.10/24), or range (192.168.10.0-192.168.10.10). Leave empty when SSO is enforced. |
 | `LIMIT_DOWNLOAD_RATE` | (*optional*) if set, limit the download rate. For instance, you may set `LIMIT_DOWNLOAD_RATE=100K` to limit download rate to 100Ko/s |
-
+| `MICROSOFT_SSO_ENABLED` | Set to `true` for Azure AD sign-in (production). See [Microsoft SSO setup](#microsoft-sso-setup). |
+| `AZURE_CLIENT_ID` | Azure app registration client ID |
+| `AZURE_CLIENT_SECRET` | Azure app registration client secret |
+| `AZURE_TENANT_ID` | Azure directory (tenant) ID |
+| `AZURE_REDIRECT_URI` | OAuth callback URL (default: `{APP_URL}/auth/microsoft/callback`) |
+| `AZURE_ALLOWED_DOMAINS` | Comma-separated email domains allowed to sign in |
+| `BRANDING_SHOW_CREDIT` | Show the "Made with love" project credit in the footer (`true` / `false`). Can be overridden in the admin Branding settings. |
 
 ## Authentication
 
-You may provide a list of IPs to limit access to the upload feature.  
-Or you can create users with login/password credentials.   
-You can also **mix the two methods**.
+Upload access can be controlled in three ways:
 
->  
-> Warning: if your leave the `UPLOAD_LIMIT_IPS` empty and you don't create users, the upload will be publicly accessible
->  
+| Mode | Use case |
+| ---- | -------- |
+| **Microsoft SSO** | Production / organizational deployment (recommended) |
+| **Login / password** | Local development when `MICROSOFT_SSO_ENABLED=false` |
+| **IP whitelist** | Legacy standalone installs when SSO is disabled |
+
+> **Warning:** If `UPLOAD_LIMIT_IPS` is empty, SSO is disabled, and no users exist, upload is publicly accessible.
+
+When Microsoft SSO is enabled (`MICROSOFT_SSO_ENABLED=true`):
+
+- Users sign in with their organization Microsoft account only — there is no password login in the web UI.
+- `UPLOAD_LIMIT_IPS` is ignored; unauthenticated users cannot upload.
+- New users are created automatically on first sign-in with the `user` role. An admin must assign roles and groups via the [admin panel](#admin-panel) at `/admin` (or CLI for bootstrap).
+
+### Microsoft SSO setup
+
+Single-tenant Azure AD (Entra ID) sign-in. There is no break-glass local admin account in production.
+
+#### 1. Register an app in Azure
+
+1. Open [Microsoft Entra admin center](https://entra.microsoft.com/) → **App registrations** → **New registration**.
+2. Name the app (e.g. "Secure File Send").
+3. Supported account types: **Accounts in this organizational directory only (Single tenant)**.
+4. Redirect URI — platform **Web**:
+   ```
+   https://files.yourcompany.com/auth/microsoft/callback
+   ```
+   Must match `APP_URL` exactly (including `https` and no trailing slash on the base URL).
+5. Create the registration and note:
+   - **Application (client) ID** → `AZURE_CLIENT_ID`
+   - **Directory (tenant) ID** → `AZURE_TENANT_ID`
+6. Under **Certificates & secrets**, create a **Client secret** → `AZURE_CLIENT_SECRET`.
+7. Under **API permissions**, ensure these delegated permissions are granted (admin consent if required):
+   - `openid`
+   - `profile`
+   - `email`
+   - `Microsoft Graph` → `User.Read`
+
+#### 2. Configure environment variables
+
+Add to `.env` (see `.env.example`):
+
+```env
+MICROSOFT_SSO_ENABLED=true
+AZURE_CLIENT_ID=your-application-client-id
+AZURE_CLIENT_SECRET=your-client-secret
+AZURE_TENANT_ID=your-directory-tenant-id
+AZURE_REDIRECT_URI="${APP_URL}/auth/microsoft/callback"
+AZURE_ALLOWED_DOMAINS=yourcompany.com
+```
+
+| Variable | Description |
+| -------- | ----------- |
+| `MICROSOFT_SSO_ENABLED` | Set to `true` to enable SSO and disable password login |
+| `AZURE_CLIENT_ID` | Application (client) ID from the app registration |
+| `AZURE_CLIENT_SECRET` | Client secret value (not the secret ID) |
+| `AZURE_TENANT_ID` | Directory (tenant) ID — only users from this tenant can sign in |
+| `AZURE_REDIRECT_URI` | OAuth callback URL; defaults to `{APP_URL}/auth/microsoft/callback` |
+| `AZURE_ALLOWED_DOMAINS` | Comma-separated list of allowed email domains (e.g. `yourcompany.com,subsidiary.com`) |
+
+Also ensure:
+
+- `APP_URL` matches the URL users visit and the Azure redirect URI base (e.g. `https://files.yourcompany.com`).
+- `UPLOAD_LIMIT_IPS` is empty or unset when SSO is enforced.
+
+#### 3. Run migrations
+
+SSO requires the SQL user schema (`email`, `azure_oid`, roles, etc.):
+
+```bash
+php artisan migrate
+```
+
+#### 4. Assign roles after first sign-in
+
+The first time a user signs in, an account is created with the default `user` role. Assign additional roles with Artisan:
+
+```bash
+# List users (shows all assigned roles)
+php artisan fs:user:list
+
+# Create a local user (bootstrap / dev only — not for production login)
+php artisan fs:user:create
+
+# Role is set at create time; edit via admin panel (/admin) or CLI
+php artisan fs:user:create adminuser --role=admin
+
+# Assign a role to an existing user (username or email; roles are additive)
+php artisan fs:user:promote you@yourcompany.com --role=admin
+php artisan fs:user:promote you@yourcompany.com --role=reviewer
+
+# Revoke an elevated role (user role cannot be revoked)
+php artisan fs:user:revoke you@yourcompany.com --role=admin
+```
+
+Users can hold multiple roles (e.g. `user` + `admin` + `reviewer`). Every account always retains the `user` role. Manage roles in the admin panel at `/admin` or via CLI:
+
+```bash
+php artisan fs:user:promote you@yourcompany.com --role=admin
+php artisan fs:user:revoke you@yourcompany.com --role=reviewer
+```
+
+#### 5. Verify
+
+1. Visit `/login` — you should see **Sign in with Microsoft** (no password form).
+2. Sign in with an account from your tenant and allowed domain.
+3. Confirm you land on the homepage and can create uploads.
+4. Test rejection: an account from another tenant or disallowed email domain should return to `/login` with an error message.
+
+#### Local development without SSO
+
+Set `MICROSOFT_SSO_ENABLED=false` in `.env`, then use IP whitelist and/or local users:
+
+```bash
+php artisan fs:user:create
+```
+
+Password login and IP bypass work only when SSO is disabled.
+
+### Admin panel
+
+Admins can manage the organization from `/admin` (Filament). Sign in with an account that has the `admin` role, then open the panel from the footer link or directly at `/admin`.
+
+| Section | Purpose |
+| -------- | -------- |
+| **Users** | Search users; edit role, group membership, and per-user approval override |
+| **Groups** | Create/edit groups; toggle approval requirement and static-link policy; assign members |
+| **Bundles** | View all shares with filters; revoke, extend expiry, or permanently delete |
+| **Reviewers** | Read-only list of users in the reviewer pool |
+| **Branding** | App name, logo, colors, footer text, and legal URLs (stored in `settings`; applied without redeploy) |
+
+Ensure `php artisan storage:link` has been run so uploaded logos are served from `public/storage`.
 
 ## Known issues
 

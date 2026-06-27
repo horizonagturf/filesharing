@@ -4,6 +4,45 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+    /* Microsoft identity platform — light-theme "Sign in with Microsoft" button */
+    .ms-sign-in-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 41px;
+        padding: 5px 12px;
+        background-color: #ffffff;
+        border: 1px solid #8c8c8c;
+        color: #5e5e5e;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 20px;
+        text-decoration: none;
+        box-sizing: border-box;
+        cursor: pointer;
+    }
+
+    .ms-sign-in-button:hover {
+        background-color: #f3f3f3;
+        color: #5e5e5e;
+    }
+
+    .ms-sign-in-button:focus {
+        outline: 2px solid #000000;
+        outline-offset: 2px;
+    }
+
+    .ms-sign-in-button__logo {
+        width: 21px;
+        height: 21px;
+        flex-shrink: 0;
+    }
+}
+
 @layer utilities {
     .dropzone {
         @apply border-2 border-primary-light !important;

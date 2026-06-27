@@ -1,15 +1,25 @@
+@php
+    $branding = app(\App\Services\BrandingSettings::class);
+    $footerText = $branding->get(\App\Services\BrandingSettings::KEY_FOOTER_TEXT);
+    $tosUrl = $branding->get(\App\Services\BrandingSettings::KEY_TOS_URL);
+    $privacyUrl = $branding->get(\App\Services\BrandingSettings::KEY_PRIVACY_URL);
+@endphp
 <footer class="relative mt-5 h-6 text-xs">
-	@if (App\Helpers\Auth::isLogged())
-		<span class="ml-3  text-slate-600">
-			@lang('app.you-are-logged-in', [
-				'username' => App\Helpers\Auth::getLoggedUserDetails()['username']
-			])
-		</span>
-		[<a href="{{ route('logout') }}" class="text-primary hover:underline">@lang('app.logout')</a>]
+    @if ($footerText || $tosUrl || $privacyUrl)
+        <div class="ml-3 mt-2 text-slate-500">
+            @if ($footerText)
+                <span>{{ $footerText }}</span>
+            @endif
+            @if ($tosUrl)
+                <a href="{{ $tosUrl }}" class="text-primary hover:underline" target="_blank" rel="noopener">Terms</a>
+            @endif
+            @if ($privacyUrl)
+                <a href="{{ $privacyUrl }}" class="text-primary hover:underline" target="_blank" rel="noopener">Privacy</a>
+            @endif
+        </div>
+    @endif
 
-
-	@endif
-
+	@if ($branding->showCreditFooter())
 	<div class="absolute right-0 top-0 text-[.6rem] text-slate-100 text-right px-2 py-1 italic bg-primary rounded-tl-lg">
 		Made with
 		<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-primary-light fill-primary-superlight inline w-4 h-4">
@@ -18,4 +28,5 @@
 	 	by
 		<a class="text-white" href="https://github.com/axeloz" target="_blank">axeloz</a>
 	</div>
+	@endif
 </footer>

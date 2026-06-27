@@ -7,12 +7,19 @@ use App\Http\Resources\BundleResource;
 use App\Http\Resources\FileResource;
 use App\Models\Bundle;
 use App\Models\File;
+use App\Services\BundleApprovalService;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
 
 class UploadController extends Controller
 {
+    public function __construct(
+        private readonly BundleApprovalService $approvalService,
+    ) {}
+
     public function createBundle(Request $request, Bundle $bundle)
     {
         return view('upload', [
@@ -24,6 +31,7 @@ class UploadController extends Controller
     // The upload form
     public function storeBundle(Request $request, Bundle $bundle)
     {
+        $this->approvalService->assertEditable($bundle);
 
         try {
             $bundle->update([
@@ -47,6 +55,7 @@ class UploadController extends Controller
 
     public function uploadFile(Request $request, Bundle $bundle)
     {
+        $this->approvalService->assertEditable($bundle);
 
         // Validating form data
         $request->validate([
@@ -104,6 +113,7 @@ class UploadController extends Controller
 
     public function deleteFile(Request $request, Bundle $bundle)
     {
+        $this->approvalService->assertEditable($bundle);
 
         $request->validate([
             'uuid' => 'required|uuid',
@@ -135,29 +145,21 @@ class UploadController extends Controller
 
     public function completeBundle(Request $request, Bundle $bundle)
     {
+        $user = Auth::user();
 
-        // Processing size
-        $size = 0;
-        foreach ($bundle->files as $f) {
-            $size += $f->filesize;
+        if ($bundle->user_id !== null && $user === null) {
+            abort(403);
         }
 
-        // Saving metadata (publish workflow deferred until Phase 5)
         try {
-            // Infinite expiry
-            if ($bundle->expiry == 'forever') {
-                $bundle->expires_at = null;
-            } else {
-                $bundle->expires_at = now()->addSeconds((int) $bundle->expiry);
-            }
-            $bundle->completed = true;
-            $bundle->fullsize = $size;
-            $bundle->preview_link = route('bundle.preview', ['bundle' => $bundle, 'auth' => $bundle->preview_token]);
-            $bundle->download_link = route('bundle.zip.download', ['bundle' => $bundle, 'auth' => $bundle->preview_token]);
-            $bundle->deletion_link = route('upload.bundle.delete', ['bundle' => $bundle]);
-            $bundle->save();
+            $bundle = $this->approvalService->complete($bundle, $user);
 
             return response()->json(new BundleResource($bundle));
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'result' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         } catch (Exception $e) {
             report($e);
 

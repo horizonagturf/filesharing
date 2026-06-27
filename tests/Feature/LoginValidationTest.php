@@ -3,14 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class LoginValidationTest extends TestCase
 {
-    public function test_login_accepts_valid_alphanumeric_username(): void
+    public function test_login_accepts_valid_username(): void
     {
-        User::create([
+        User::factory()->create([
             'username' => 'testuser',
             'password' => Hash::make('secret123'),
         ]);
@@ -22,17 +23,19 @@ class LoginValidationTest extends TestCase
 
         $response->assertOk()
             ->assertJson(['result' => true]);
+
+        $this->assertTrue(Auth::check());
     }
 
-    public function test_login_rejects_invalid_username_characters(): void
+    public function test_login_rejects_too_short_username(): void
     {
-        User::create([
+        User::factory()->create([
             'username' => 'testuser',
             'password' => Hash::make('secret123'),
         ]);
 
         $response = $this->postJson('/login', [
-            'login' => 'test-user',
+            'login' => 'abc',
             'password' => 'secret123',
         ], ['X-Requested-With' => 'XMLHttpRequest']);
 

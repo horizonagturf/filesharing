@@ -8,7 +8,9 @@
 	document.addEventListener('alpine:init', () => {
 		Alpine.data('bundle', () => ({
 			bundles: [],
-			pending: [],
+			drafts: [],
+			awaitingApproval: [],
+			denied: [],
 			active: [],
 			expired: [],
 			currentBundle: null,
@@ -42,15 +44,25 @@
 							bundle.label = bundle.title
 						}
 
+						if (bundle.status_label) {
+							bundle.label += ' [' + bundle.status_label + ']'
+						}
+
 						const expiresAt = this.parseExpiresAt(bundle.expires_at)
 						if (expiresAt != null && expiresAt.isValid() && expiresAt.isBefore(dayjs())) {
 							this.expired.push(bundle)
 						}
-						else if (bundle.completed == true) {
+						else if (bundle.status === 'pending_approval') {
+							this.awaitingApproval.push(bundle)
+						}
+						else if (bundle.status === 'denied') {
+							this.denied.push(bundle)
+						}
+						else if (bundle.status === 'approved' || bundle.status === 'sent' || bundle.completed == true) {
 							this.active.push(bundle)
 						}
 						else {
-							this.pending.push(bundle)
+							this.drafts.push(bundle)
 						}
 						bundle.label += ' - {{ __('app.created-at') }} '+dayjs(bundle.created_at).fromNow()
 					})
@@ -113,7 +125,7 @@
 					<p class="text-sm bg-primary rounded-full ml-2 text-white px-3" x-text="Object.keys(bundles).length"></p>
 				</h2>
 
-				@if (App\Helpers\Auth::isLogged())
+				@auth
 					<p class="text-center">
 						<span x-show="bundles == null || Object.keys(bundles).length == 0">@lang('app.no-existing-bundle')</span>
 					</p>
@@ -128,9 +140,25 @@
 					>
 						<option>-</option>
 
-						<template x-if="Object.keys(pending).length > 0">
+						<template x-if="Object.keys(drafts).length > 0">
 							<optgroup label="{{ __('app.pending') }}">
-								<template x-for="bundle in pending">
+								<template x-for="bundle in drafts">
+									<option :value="bundle.slug" x-text="bundle.label"></option>
+								</template>
+							</optgroup>
+						</template>
+
+						<template x-if="Object.keys(awaitingApproval).length > 0">
+							<optgroup label="{{ __('approval.status-pending_approval') }}">
+								<template x-for="bundle in awaitingApproval">
+									<option :value="bundle.slug" x-text="bundle.label"></option>
+								</template>
+							</optgroup>
+						</template>
+
+						<template x-if="Object.keys(denied).length > 0">
+							<optgroup label="{{ __('approval.status-denied') }}">
+								<template x-for="bundle in denied">
 									<option :value="bundle.slug" x-text="bundle.label"></option>
 								</template>
 							</optgroup>
@@ -157,7 +185,7 @@
 						<a href="{{ route('login') }}" class="text-primary font-bold hover:underline">@lang('app.do-login')</a>
 						@lang('app.to-get-bundles')
 					</p>
-				@endif
+				@endauth
 			</div>
 
 			<h2 class="mt-10 font-title text-2xl mb-5 text-primary font-medium uppercase">@lang('app.or-create')</h2>

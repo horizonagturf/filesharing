@@ -2,36 +2,25 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\UserRole;
 use App\Models\User;
-use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use Throwable;
 
 class CreateUser extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'fs:user:create {login?}';
+    protected $signature = 'fs:user:create
+                            {login?}
+                            {--role=user : User role (user, reviewer, admin)}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
+    protected $description = 'Create a local user account';
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
         $login = strtolower($this->argument('login'));
 
         login:
-        // If user was not provided, asking for it
         if (empty($login)) {
             $login = strtolower($this->ask('Enter the user\'s login'));
         }
@@ -49,8 +38,14 @@ class CreateUser extends Command
             goto login;
         }
 
+        $roleInput = strtolower($this->option('role'));
+        if (! in_array($roleInput, ['user', 'reviewer', 'admin'], true)) {
+            $this->error('Invalid role. Must be user, reviewer, or admin');
+
+            return self::FAILURE;
+        }
+
         password:
-        // Asking for user's password
         $password = $this->secret('Enter the user\'s password');
 
         if (! preg_match('~^[^\s]{5,100}$~', $password)) {
@@ -60,14 +55,18 @@ class CreateUser extends Command
         }
 
         try {
-            User::create([
+            User::createWithRoles([
                 'username' => $login,
                 'password' => Hash::make($password),
-            ]);
+            ], [UserRole::from($roleInput)]);
 
             $this->info('User has been created');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->error('An error occurred, could not create user');
+
+            return self::FAILURE;
         }
+
+        return self::SUCCESS;
     }
 }

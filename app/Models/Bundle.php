@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalRequestStatus;
 use App\Enums\BundleStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Bundle extends Model
 {
@@ -54,5 +56,36 @@ class Bundle extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function approvalRequests(): HasMany
+    {
+        return $this->hasMany(ApprovalRequest::class);
+    }
+
+    public function pendingApprovalRequest(): HasOne
+    {
+        return $this->hasOne(ApprovalRequest::class)
+            ->where('status', ApprovalRequestStatus::Pending)
+            ->latestOfMany();
+    }
+
+    public function isEditable(): bool
+    {
+        if ($this->completed) {
+            return false;
+        }
+
+        return in_array($this->status, [BundleStatus::Draft, BundleStatus::Denied], true);
+    }
+
+    public function isShareable(): bool
+    {
+        if (in_array($this->status, [BundleStatus::Approved, BundleStatus::Sent], true)) {
+            return true;
+        }
+
+        // Bundles completed before the approval workflow kept draft status.
+        return $this->completed && $this->status === BundleStatus::Draft;
     }
 }

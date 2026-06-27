@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources;
 
-use App\Helpers\Auth;
 use App\Helpers\Upload;
+use App\Services\ApprovalPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class BundleResource extends JsonResource
@@ -21,13 +22,15 @@ class BundleResource extends JsonResource
         Do not return private data on the preview page
          */
         $full = false;
-        if (Auth::isLogged() || Upload::canUpload($request->ip())) {
+        if (Auth::check() || Upload::canUpload($request->ip())) {
             $full = true;
         }
 
         $response = [
             'created_at' => $this->created_at,
             'completed' => (bool) $this->completed,
+            'status' => $this->status?->value,
+            'status_label' => $this->status ? __('approval.status-'.$this->status->value) : null,
             'expiry' => (int) $this->expiry,
             'expires_at' => $this->expires_at,
             'slug' => $this->slug,
@@ -44,6 +47,15 @@ class BundleResource extends JsonResource
             'owner_token' => $this->when($full === true, $this->owner_token),
             'preview_token' => $this->when($full === true, $this->preview_token),
             'deletion_link' => $this->when($full === true, $this->deletion_link),
+            'requires_approval' => $this->when($full === true && Auth::check(), fn () => app(ApprovalPolicy::class)->requiresApproval(Auth::user())),
+            'denial_reason' => $this->when(
+                $full === true && $this->status?->value === 'denied',
+                fn () => $this->approvalRequests()
+                    ->where('status', 'denied')
+                    ->latest()
+                    ->value('notes'),
+            ),
+            'is_editable' => $this->when($full === true, $this->isEditable()),
             'user' => $this->when($full === true, new UserResource($this->user)),
         ];
 

@@ -50,12 +50,14 @@
 
 				if (this.getBundle()) {
 					// Steps router
-					if (this.bundle.completed == true) {
+					if (this.bundle.status === 'pending_approval' || this.bundle.status === 'approved' || this.bundle.status === 'sent' || (this.bundle.completed == true && this.bundle.status !== 'denied')) {
 						this.step = 3
 					}
 					else if (this.bundle.title) {
 						this.step = 2
-						this.startDropzone()
+						if (this.bundle.is_editable !== false) {
+							this.startDropzone()
+						}
 					}
 					else {
 						this.step = 1
@@ -131,7 +133,11 @@
 					return false;
 				}
 
-				this.showModal('{{ __('app.confirm-complete') }}', () => {
+				let confirmText = this.bundle.requires_approval
+					? '{{ __('approval.confirm-complete-approval') }}'
+					: '{{ __('approval.confirm-complete-direct') }}'
+
+				this.showModal(confirmText, () => {
 					axios({
 						url: BASE_URL+'/upload/'+this.bundle.slug+'/complete',
 						method: 'POST',
@@ -563,6 +569,14 @@
 
 				{{-- STEP 2 --}}
 				<div x-cloak class="" x-show="step == 2">
+					<div x-cloak x-show="bundle.status === 'denied'" class="mb-5 p-4 border border-red-300 bg-red-50 rounded">
+						<p class="font-medium text-red-700">@lang('approval.denied-message')</p>
+						<p x-show="bundle.denial_reason" class="text-sm text-red-600 mt-1">
+							@lang('approval.denied-reason'): <span x-text="bundle.denial_reason"></span>
+						</p>
+						<p class="text-sm text-red-600 mt-1">@lang('approval.resubmit-hint')</p>
+					</div>
+
 					<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
 						@lang('app.upload-files-title')
 					</h2>
@@ -667,6 +681,17 @@
 				{{-- STEP 3 --}}
 				<template x-if="step == 3">
 					<div x-show="step == 3">
+						<template x-if="bundle.status === 'pending_approval'">
+							<div>
+								<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
+									@lang('approval.status-pending_approval')
+								</h2>
+								<p class="text-slate-600">@lang('approval.pending-message')</p>
+							</div>
+						</template>
+
+						<template x-if="bundle.preview_link">
+							<div>
 						<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
 							@lang('app.download-links')
 						</h2>
@@ -720,6 +745,8 @@
 								</template>
 							</div>
 						</div>
+							</div>
+						</template>
 					</div>
 				</template>
 			</div>

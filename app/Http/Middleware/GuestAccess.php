@@ -28,6 +28,9 @@ class GuestAccess
         // Aborting if auth_token is different from URL param
         abort_if($bundle->preview_token !== $request->auth, 403);
 
+        // Aborting if bundle is not approved for sharing
+        abort_unless($bundle->isShareable(), 404);
+
         // Aborting if bundle expired
         if (! empty($bundle->expires_at)) {
             abort_if($bundle->expires_at->isBefore(Carbon::now()), 404);

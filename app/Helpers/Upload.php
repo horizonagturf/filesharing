@@ -133,6 +133,9 @@ class Upload
 
     public static function canUpload(string $current_ip): bool
     {
+        if (config('sso.enabled')) {
+            return false;
+        }
 
         // Getting the IP limit configuration
         $ips = config('sharing.upload_ip_limit');
@@ -178,7 +181,7 @@ class Upload
                 $netmask = str_replace('*', '0', $netmask);
                 $netmask_dec = ip2long($netmask);
 
-                return  (ip2long($ip) & $netmask_dec) == (ip2long($range) & $netmask_dec);
+                return (ip2long($ip) & $netmask_dec) == (ip2long($range) & $netmask_dec);
             }
             // Netmask is a CIDR size block
             else {
@@ -218,7 +221,7 @@ class Upload
                 $upper_dec = (float) sprintf('%u', ip2long($upper));
                 $ip_dec = (float) sprintf('%u', ip2long($ip));
 
-                return  ($ip_dec >= $lower_dec) && ($ip_dec <= $upper_dec);
+                return ($ip_dec >= $lower_dec) && ($ip_dec <= $upper_dec);
             }
 
             return false;
