@@ -8,5 +8,6 @@ return [
     'sso-error-domain' => 'Sign-in was rejected because your email domain is not allowed.',
     'sso-error-email' => 'Sign-in failed because no valid email address was returned from Microsoft.',
     'sso-error-config' => 'Microsoft sign-in is not configured correctly. Contact your administrator.',
+    'sso-error-account-conflict' => 'Sign-in failed because your Microsoft account matches more than one local user. Contact your administrator.',
     'sso-error-generic' => 'Sign-in failed. Please try again or contact your administrator.',
 ];
