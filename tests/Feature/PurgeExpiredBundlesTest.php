@@ -16,11 +16,11 @@ class PurgeExpiredBundlesTest extends TestCase
     protected function tearDown(): void
     {
         if ($this->slug !== null) {
-            if ($bundle = Bundle::find($this->slug)) {
+            if ($bundle = Bundle::where('slug', $this->slug)->first()) {
                 foreach ($bundle->files as $file) {
-                    $file->forceDelete();
+                    $file->delete();
                 }
-                $bundle->forceDelete();
+                $bundle->delete();
             }
             Storage::disk('uploads')->deleteDirectory($this->slug);
         }
@@ -37,7 +37,7 @@ class PurgeExpiredBundlesTest extends TestCase
             'owner_token' => substr(sha1('owner'), 0, 15),
             'preview_token' => substr(sha1('preview'), 0, 15),
             'completed' => true,
-            'expiry' => 86400,
+            'expiry' => '86400',
             'expires_at' => now()->subDay(),
             'fullsize' => 7,
             'max_downloads' => 0,
@@ -46,12 +46,11 @@ class PurgeExpiredBundlesTest extends TestCase
 
         $file = File::create([
             'uuid' => (string) Str::uuid(),
-            'bundle_slug' => $bundle->slug,
+            'bundle_id' => $bundle->id,
             'original' => 'expired.txt',
             'filesize' => 7,
             'fullpath' => $bundle->slug.'/expired.txt',
             'filename' => 'expired.txt',
-            'created_at' => time(),
             'status' => true,
         ]);
 
@@ -59,8 +58,8 @@ class PurgeExpiredBundlesTest extends TestCase
 
         Artisan::call('fs:bundle:purge');
 
-        $this->assertNull(Bundle::find($bundle->slug));
-        $this->assertNull(File::find($file->uuid));
+        $this->assertNull(Bundle::where('slug', $bundle->slug)->first());
+        $this->assertNull(File::where('uuid', $file->uuid)->first());
         $this->assertFalse(Storage::disk('uploads')->exists($file->fullpath));
 
         $this->slug = null;
@@ -75,7 +74,7 @@ class PurgeExpiredBundlesTest extends TestCase
             'owner_token' => substr(sha1('owner3'), 0, 15),
             'preview_token' => substr(sha1('preview3'), 0, 15),
             'completed' => true,
-            'expiry' => 86400,
+            'expiry' => '86400',
             'expires_at' => now()->subDay(),
             'fullsize' => 7,
             'max_downloads' => 0,
@@ -84,12 +83,11 @@ class PurgeExpiredBundlesTest extends TestCase
 
         $file = File::create([
             'uuid' => (string) Str::uuid(),
-            'bundle_slug' => $bundle->slug,
+            'bundle_id' => $bundle->id,
             'original' => 'stuck.txt',
             'filesize' => 7,
             'fullpath' => $bundle->slug.'/stuck.txt',
             'filename' => 'stuck.txt',
-            'created_at' => time(),
             'status' => true,
         ]);
 
@@ -105,8 +103,8 @@ class PurgeExpiredBundlesTest extends TestCase
 
         Artisan::call('fs:bundle:purge');
 
-        $this->assertNotNull(Bundle::find($bundle->slug));
-        $this->assertNotNull(File::find($file->uuid));
+        $this->assertNotNull(Bundle::where('slug', $bundle->slug)->first());
+        $this->assertNotNull(File::where('uuid', $file->uuid)->first());
     }
 
     public function test_purge_skips_bundles_without_expiry(): void
@@ -127,6 +125,6 @@ class PurgeExpiredBundlesTest extends TestCase
 
         Artisan::call('fs:bundle:purge');
 
-        $this->assertNotNull(Bundle::find($bundle->slug));
+        $this->assertNotNull(Bundle::where('slug', $bundle->slug)->first());
     }
 }

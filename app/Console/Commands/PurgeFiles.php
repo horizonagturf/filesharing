@@ -58,10 +58,10 @@ class PurgeFiles extends Command
                 }
 
                 foreach ($bundle->files as $file) {
-                    $file->forceDelete();
+                    $file->delete();
                 }
 
-                $bundle->forceDelete();
+                $bundle->delete();
                 $this->info('-> bundle was properly deleted');
             }
         } catch (Exception $e) {

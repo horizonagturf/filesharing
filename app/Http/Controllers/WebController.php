@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BundleStatus;
 use App\Helpers\Auth;
 use App\Http\Resources\BundleResource;
 use App\Models\Bundle;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class WebController extends Controller
 {
@@ -53,6 +55,10 @@ class WebController extends Controller
         }
 
         // This should never happen
+        Log::warning('Login returned unexpected non-true result without exception', [
+            'login' => $request->login,
+        ]);
+
         return response()->json([
             'result' => false,
             'message' => 'Unexpected error',
@@ -70,8 +76,8 @@ class WebController extends Controller
 
         try {
             $bundle = new Bundle([
-                'user_username' => $user->username ?? null,
-                'created_at' => time(),
+                'user_id' => $user->id ?? null,
+                'status' => BundleStatus::Draft,
                 'completed' => false,
                 'expiry' => config('sharing.default-expiry', 86400),
                 'expires_at' => null,
@@ -93,6 +99,8 @@ class WebController extends Controller
                 'bundle' => new BundleResource($bundle),
             ]);
         } catch (Exception $e) {
+            report($e);
+
             return response()->json([
                 'result' => false,
                 'message' => $e->getMessage(),

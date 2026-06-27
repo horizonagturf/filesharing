@@ -196,6 +196,10 @@
 
 					this.dropzone.on('sending', (file, xhr, data) => {
 						data.append('uuid', file.uuid)
+						const csrf = document.head.querySelector('meta[name="csrf-token"]')
+						if (csrf) {
+							data.append('_token', csrf.content)
+						}
 					})
 
 					this.dropzone.on('uploadprogress', (file, progress, bytes) => {
