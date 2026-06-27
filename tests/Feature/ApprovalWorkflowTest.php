@@ -47,6 +47,59 @@ class ApprovalWorkflowTest extends TestCase
         Mail::assertSent(ApprovalRequestSubmittedMail::class, fn ($mail) => $mail->hasTo($reviewer->email));
     }
 
+    public function test_pending_approval_bundle_has_no_expires_at(): void
+    {
+        Mail::fake();
+        config(['approval.required_default' => true]);
+
+        $user = User::factory()->create(['requires_approval' => null]);
+        $bundle = $this->createBundle($user);
+
+        $this->actingAsUser($user)
+            ->postJson("/upload/{$bundle->slug}/complete", [
+                'auth' => $bundle->owner_token,
+            ], $this->uploadHeaders($bundle))
+            ->assertOk();
+
+        $this->assertNull($bundle->fresh()->expires_at);
+    }
+
+    public function test_approved_bundle_expiry_starts_at_approval_not_submit(): void
+    {
+        Mail::fake();
+        config(['approval.required_default' => true]);
+
+        $uploader = User::factory()->create(['requires_approval' => true]);
+        $reviewer = User::factory()->reviewer()->create();
+        $bundle = $this->createBundle($uploader);
+
+        $this->travelTo(now());
+        $this->actingAsUser($uploader)
+            ->postJson("/upload/{$bundle->slug}/complete", [
+                'auth' => $bundle->owner_token,
+            ], $this->uploadHeaders($bundle))
+            ->assertOk();
+
+        $request = ApprovalRequest::where('bundle_id', $bundle->id)->firstOrFail();
+
+        $this->travel(2)->days();
+
+        $this->actingAsUser($reviewer)
+            ->postJson("/approval/{$request->id}/approve", [], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk();
+
+        $bundle->refresh();
+        $this->assertSame(
+            now()->addSeconds(86400)->getTimestamp(),
+            $bundle->expires_at->getTimestamp(),
+        );
+        $this->assertTrue($bundle->expires_at->isFuture());
+
+        $this->get("/bundle/{$bundle->slug}/preview?auth={$bundle->preview_token}")
+            ->assertOk()
+            ->assertSee('Test bundle');
+    }
+
     public function test_non_approval_user_gets_immediate_links(): void
     {
         Mail::fake();

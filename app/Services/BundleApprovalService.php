@@ -20,7 +20,7 @@ class BundleApprovalService
         private readonly ApprovalPolicy $approvalPolicy,
     ) {}
 
-    public function complete(Bundle $bundle, User $user): Bundle
+    public function complete(Bundle $bundle, ?User $user): Bundle
     {
         if (! $bundle->isEditable()) {
             throw new InvalidArgumentException(__('approval.bundle-not-editable'));
@@ -33,9 +33,10 @@ class BundleApprovalService
         return DB::transaction(function () use ($bundle, $user) {
             $this->finalizeMetadata($bundle);
 
-            if ($this->approvalPolicy->requiresApproval($user)) {
+            if ($user !== null && $this->approvalPolicy->requiresApproval($user)) {
                 $bundle->status = BundleStatus::PendingApproval;
                 $bundle->completed = true;
+                $bundle->expires_at = null;
                 $bundle->preview_link = null;
                 $bundle->download_link = null;
                 $bundle->save();
@@ -71,6 +72,7 @@ class BundleApprovalService
             ]);
 
             $bundle = $request->bundle;
+            $this->setExpiresAt($bundle);
             $this->generateLinks($bundle);
             $bundle->status = BundleStatus::Approved;
             $bundle->completed = true;
@@ -127,6 +129,7 @@ class BundleApprovalService
 
     private function approveDirectly(Bundle $bundle): void
     {
+        $this->setExpiresAt($bundle);
         $this->generateLinks($bundle);
         $bundle->status = BundleStatus::Approved;
         $bundle->completed = true;
@@ -135,16 +138,17 @@ class BundleApprovalService
 
     private function finalizeMetadata(Bundle $bundle): void
     {
-        $size = $bundle->files->sum('filesize');
+        $bundle->fullsize = $bundle->files->sum('filesize');
+        $bundle->deletion_link = route('upload.bundle.delete', ['bundle' => $bundle]);
+    }
 
+    private function setExpiresAt(Bundle $bundle): void
+    {
         if ($bundle->expiry === 'forever') {
             $bundle->expires_at = null;
         } else {
             $bundle->expires_at = now()->addSeconds((int) $bundle->expiry);
         }
-
-        $bundle->fullsize = $size;
-        $bundle->deletion_link = route('upload.bundle.delete', ['bundle' => $bundle]);
     }
 
     private function generateLinks(Bundle $bundle): void

@@ -145,10 +145,13 @@ class UploadController extends Controller
 
     public function completeBundle(Request $request, Bundle $bundle)
     {
-        try {
-            $user = Auth::user();
-            abort_if($user === null, 403);
+        $user = Auth::user();
 
+        if ($bundle->user_id !== null && $user === null) {
+            abort(403);
+        }
+
+        try {
             $bundle = $this->approvalService->complete($bundle, $user);
 
             return response()->json(new BundleResource($bundle));

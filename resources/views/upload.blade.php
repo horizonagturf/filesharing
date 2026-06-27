@@ -681,7 +681,7 @@
 							</div>
 						</template>
 
-						<template x-if="bundle.status === 'approved' || bundle.status === 'sent'">
+						<template x-if="bundle.preview_link">
 							<div>
 						<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
 							@lang('app.download-links')

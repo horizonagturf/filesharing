@@ -72,11 +72,20 @@ class Bundle extends Model
 
     public function isEditable(): bool
     {
+        if ($this->completed) {
+            return false;
+        }
+
         return in_array($this->status, [BundleStatus::Draft, BundleStatus::Denied], true);
     }
 
     public function isShareable(): bool
     {
-        return in_array($this->status, [BundleStatus::Approved, BundleStatus::Sent], true);
+        if (in_array($this->status, [BundleStatus::Approved, BundleStatus::Sent], true)) {
+            return true;
+        }
+
+        // Bundles completed before the approval workflow kept draft status.
+        return $this->completed && $this->status === BundleStatus::Draft;
     }
 }
