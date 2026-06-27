@@ -31,7 +31,7 @@ class WebController extends Controller
 		abort_if(! $request->ajax(), 403);
 
 		$request->validate([
-			'login'		=> 'required|alphanum|min:4|max:40',
+			'login'		=> 'required|alpha_num|min:4|max:40',
 			'password'	=> 'required|min:5|max:100'
 		]);
 

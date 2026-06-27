@@ -107,10 +107,11 @@ class UploadController extends Controller
 			'uuid'		=> 'required|uuid'
 		]);
 
-		try {
-			// Getting file model
-			$file = File::findOrFail($request->uuid);
+		$file = File::where('uuid', $request->uuid)
+			->where('bundle_slug', $bundle->slug)
+			->firstOrFail();
 
+		try {
 			// Physically deleting the file
 			if (! Storage::disk('uploads')->delete($file->fullpath)) {
 				throw new Exception('Cannot delete file from disk');

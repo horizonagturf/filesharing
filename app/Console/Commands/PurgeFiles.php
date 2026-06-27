@@ -1,90 +1,66 @@
 <?php
 
-namespace app\Console\Commands;
+namespace App\Console\Commands;
 
+use App\Models\Bundle;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
 class PurgeFiles extends Command
 {
-	/**
-	 * The name and signature of the console command.
-	 *
-	 * @var string
-	 */
 	protected $signature = 'fs:bundle:purge';
 
-	/**
-	 * The console command description.
-	 *
-	 * @var string
-	 */
 	protected $description = 'Purge expired uploaded files from the storage disk';
 
-	/**
-	 * Create a new command instance.
-	 *
-	 * @return void
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-	}
-
-	/**
-	 * Execute the console command.
-	 *
-	 * @return mixed
-	 */
 	public function handle()
 	{
-		//
 		try {
-			$bundles = Storage::disk('uploads')->directories('.');
-			if (count($bundles) > 0) {
-				foreach ($bundles as $b) {
-                    $this->line(' ');
-					$this->line('Found bundle: '.$b);
+			$bundles = Bundle::all();
 
-                    if (Storage::disk('uploads')->exists($b.'/bundle.json')) {
-                        $this->line('-> found bundle.json file in folder');
-
-                        $content = Storage::disk('uploads')->get($b.'/bundle.json');
-                        if (! $metadata = json_decode($content, true)) {
-                            $this->error('-> unable to decode JSON');
-                            continue;
-                        }
-
-                        if (! empty($metadata['expires_at'])) {
-                            if ($metadata['expires_at'] >= time()) {
-                                $this->info('-> bundle is still valid (expiration date: '.date('Y-m-d H:i:s', $metadata['expires_at']).')');
-                            }
-                            else {
-                                $this->comment('-> bundle has expired, must be removed');
-
-                                if (Storage::disk('uploads')->deleteDirectory($b)) {
-                                    $this->info('-> bundle was properly deleted');
-                                }
-                                else {
-                                    $this->error('-> bundle could not be deleted');
-                                    continue;
-                                }
-                            }
-                        }
-                        else {
-                            $this->comment('-> bundle has no expiring date, skipping');
-                        }
-                    }
-				}
-			}
-			else {
+			if ($bundles->isEmpty()) {
 				$this->line('No bundle was found');
+				return;
+			}
+
+			foreach ($bundles as $bundle) {
+				$this->line('');
+				$this->line('Found bundle: '.$bundle->slug);
+
+				if (empty($bundle->expires_at)) {
+					$this->comment('-> bundle has no expiry date, skipping');
+					continue;
+				}
+
+				$expiresAt = $bundle->expires_at instanceof Carbon
+					? $bundle->expires_at
+					: Carbon::parse($bundle->expires_at);
+
+				if ($expiresAt->isFuture()) {
+					$this->info('-> bundle is still valid (expiration date: '.$expiresAt->format('Y-m-d H:i:s').')');
+					continue;
+				}
+
+				$this->comment('-> bundle has expired, must be removed');
+
+				foreach ($bundle->files as $file) {
+					$file->forceDelete();
+				}
+
+				if (Storage::disk('uploads')->deleteDirectory($bundle->slug)) {
+					$this->info('-> upload directory deleted');
+				}
+				else {
+					$this->error('-> upload directory could not be deleted');
+				}
+
+				$bundle->forceDelete();
+				$this->info('-> bundle was properly deleted');
 			}
 		}
 		catch (Exception $e) {
 			$this->error($e->getMessage());
 		}
-
 	}
 }

@@ -41,7 +41,6 @@ Route::middleware(['can.upload'])->group(function() {
 
 		Route::middleware(['access.owner'])->group(function() {
 			Route::post('/', 'storeBundle')->name('create.store');
-			Route::get('/metadata', 'getMetadata')->name('metadata.get');
 			Route::post('/file', 'uploadFile')->name('file.store');
 			Route::delete('/file', 'deleteFile')->name('file.delete');
 			Route::post('/complete', 'completeBundle')->name('complete');
@@ -56,6 +55,5 @@ Download routes
 */
 Route::middleware(['access.guest'])->prefix('/bundle/{bundle}')->controller(BundleController::class)->name('bundle.')->group(function() {
 	Route::get('/preview', 'previewBundle')->name('preview');
-	Route::post('/zip', 'prepareZip')->name('zip.make');
 	Route::get('/download', 'downloadZip')->name('zip.download');
 });
