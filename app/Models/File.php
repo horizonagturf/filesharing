@@ -2,52 +2,45 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Schema\Blueprint;
-use Orbit\Concerns\Orbital;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class File extends Model
 {
-    use Orbital;
-
-    public $fillable = [
+    protected $fillable = [
         'uuid',
-        'bundle_slug',
+        'bundle_id',
         'original',
         'filesize',
         'fullpath',
         'filename',
-        'created_at',
         'status',
         'hash',
     ];
 
-    public $incrementing = false;
+    protected function casts(): array
+    {
+        return [
+            'status' => 'boolean',
+            'filesize' => 'integer',
+        ];
+    }
 
-    public function getKeyName()
+    public function getRouteKeyName(): string
     {
         return 'uuid';
     }
 
-    public function getIncrementing()
-    {
-        return false;
-    }
-
-    public static function schema(Blueprint $table)
-    {
-        $table->string('uuid');
-        $table->string('original')->nullable();
-        $table->string('filename')->nullable();
-        $table->string('status')->nullable();
-        $table->string('hash')->nullable();
-        $table->longText('fullpath')->nullable();
-        $table->boolean('filesize')->nullable();
-        $table->string('bundle_slug');
-    }
-
-    public function bundle()
+    public function bundle(): BelongsTo
     {
         return $this->belongsTo(Bundle::class);
+    }
+
+    protected function bundleSlug(): Attribute
+    {
+        return Attribute::get(fn () => $this->relationLoaded('bundle')
+            ? $this->bundle?->slug
+            : $this->bundle()->value('slug'));
     }
 }

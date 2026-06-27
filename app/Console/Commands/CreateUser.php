@@ -42,8 +42,8 @@ class CreateUser extends Command
             goto login;
         }
 
-        $existing = User::find($login);
-        if (! empty($existing) && $existing->count() > 0) {
+        $existing = User::where('username', $login)->first();
+        if (! empty($existing)) {
             $this->error('User "'.$login.'" already exists');
             unset($login);
             goto login;

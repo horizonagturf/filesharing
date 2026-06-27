@@ -117,6 +117,7 @@ class BundleController extends Controller
 
         // Could not find the metadata file
         catch (Exception $e) {
+            report($e);
             abort(500, $e->getMessage());
         }
 

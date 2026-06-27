@@ -36,6 +36,8 @@ class UploadController extends Controller
 
             return response()->json(new BundleResource($bundle));
         } catch (Exception $e) {
+            report($e);
+
             return response()->json([
                 'result' => false,
                 'message' => $e->getMessage(),
@@ -79,12 +81,11 @@ class UploadController extends Controller
             // Generating file metadata
             $file = new File([
                 'uuid' => $request->uuid,
-                'bundle_slug' => $bundle->slug,
+                'bundle_id' => $bundle->id,
                 'original' => $original,
                 'filesize' => $size,
                 'fullpath' => $fullpath,
                 'filename' => $filename,
-                'created_at' => time(),
                 'status' => true,
                 'hash' => $hash ?? null,
             ]);
@@ -92,6 +93,8 @@ class UploadController extends Controller
 
             return response()->json(new FileResource($file));
         } catch (Exception $e) {
+            report($e);
+
             return response()->json([
                 'result' => false,
                 'message' => $e->getMessage(),
@@ -107,7 +110,7 @@ class UploadController extends Controller
         ]);
 
         $file = File::where('uuid', $request->uuid)
-            ->where('bundle_slug', $bundle->slug)
+            ->where('bundle_id', $bundle->id)
             ->firstOrFail();
 
         try {
@@ -121,6 +124,8 @@ class UploadController extends Controller
 
             return response()->json(new BundleResource($bundle));
         } catch (Exception $e) {
+            report($e);
+
             return response()->json([
                 'result' => false,
                 'message' => $e->getMessage(),
@@ -134,19 +139,18 @@ class UploadController extends Controller
         // Processing size
         $size = 0;
         foreach ($bundle->files as $f) {
-            $size += $f['filesize'];
+            $size += $f->filesize;
         }
 
-        // Saving metadata
+        // Saving metadata (publish workflow deferred until Phase 5)
         try {
-            $bundle->completed = true;
-
             // Infinite expiry
             if ($bundle->expiry == 'forever') {
                 $bundle->expires_at = null;
             } else {
-                $bundle->expires_at = time() + $bundle->expiry;
+                $bundle->expires_at = now()->addSeconds((int) $bundle->expiry);
             }
+            $bundle->completed = true;
             $bundle->fullsize = $size;
             $bundle->preview_link = route('bundle.preview', ['bundle' => $bundle, 'auth' => $bundle->preview_token]);
             $bundle->download_link = route('bundle.zip.download', ['bundle' => $bundle, 'auth' => $bundle->preview_token]);
@@ -155,6 +159,8 @@ class UploadController extends Controller
 
             return response()->json(new BundleResource($bundle));
         } catch (Exception $e) {
+            report($e);
+
             return response()->json([
                 'result' => false,
                 'message' => $e->getMessage(),
@@ -173,21 +179,23 @@ class UploadController extends Controller
 
         try {
             // Forcing bundle to expire
-            $bundle->expires_at = time() - (3600 * 24 * 30);
+            $bundle->expires_at = now()->subDays(30);
             $bundle->save();
 
             // Then deleting file models
             foreach ($bundle->files as $f) {
-                $f->forceDelete();
+                $f->delete();
             }
 
             // Finally deleting bundle
-            $bundle->forceDelete();
+            $bundle->delete();
 
             return response()->json([
                 'success' => true,
             ]);
         } catch (Exception $e) {
+            report($e);
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

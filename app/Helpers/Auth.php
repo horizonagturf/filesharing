@@ -6,7 +6,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 
 class Auth
 {
@@ -60,7 +59,7 @@ class Auth
 
     public static function getUserDetails(string $username): User
     {
-        $user = User::find($username);
+        $user = User::where('username', $username)->first();
         if (empty($user)) {
             throw new Exception('No such user');
         }
@@ -68,16 +67,13 @@ class Auth
         return $user;
     }
 
-    public static function setUserDetails(string $username, array $data): array
+    public static function setUserDetails(string $username, array $data): User
     {
-        $original = self::getUserDetails($username);
-        $updated = array_merge($original, $data);
+        $user = self::getUserDetails($username);
+        $user->fill($data);
+        $user->save();
 
-        if (Storage::disk('users')->put($username.'.json', json_encode($updated))) {
-            return $updated;
-        }
-
-        throw new Exception('Could not update user\'s details');
+        return $user;
     }
 
     public static function logout()

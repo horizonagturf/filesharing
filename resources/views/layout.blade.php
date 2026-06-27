@@ -8,6 +8,7 @@
 			{{ config('app.name') }}
 		</title>
 		<meta name="theme-color" content="#319197">
+		<meta name="csrf-token" content="{{ csrf_token() }}">
         @vite('resources/css/app.css')
         @stack('styles')
         @vite('resources/js/app.js')

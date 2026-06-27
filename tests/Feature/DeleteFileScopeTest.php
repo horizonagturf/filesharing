@@ -15,11 +15,11 @@ class DeleteFileScopeTest extends TestCase
     protected function tearDown(): void
     {
         foreach ($this->slugs as $slug) {
-            if ($bundle = Bundle::find($slug)) {
+            if ($bundle = Bundle::where('slug', $slug)->first()) {
                 foreach ($bundle->files as $file) {
-                    $file->forceDelete();
+                    $file->delete();
                 }
-                $bundle->forceDelete();
+                $bundle->delete();
             }
             Storage::disk('uploads')->deleteDirectory($slug);
         }
@@ -44,7 +44,7 @@ class DeleteFileScopeTest extends TestCase
         ]);
 
         $response->assertNotFound();
-        $this->assertNotNull(File::find($foreignFile->uuid));
+        $this->assertNotNull(File::where('uuid', $foreignFile->uuid)->first());
         $this->assertTrue(Storage::disk('uploads')->exists($foreignFile->fullpath));
     }
 
@@ -57,7 +57,7 @@ class DeleteFileScopeTest extends TestCase
             'owner_token' => substr(sha1($slug.'owner'), 0, 15),
             'preview_token' => substr(sha1($slug.'preview'), 0, 15),
             'completed' => false,
-            'expiry' => 86400,
+            'expiry' => '86400',
             'fullsize' => 0,
             'max_downloads' => 0,
             'downloads' => 0,
@@ -68,12 +68,11 @@ class DeleteFileScopeTest extends TestCase
     {
         return File::create([
             'uuid' => (string) Str::uuid(),
-            'bundle_slug' => $bundle->slug,
+            'bundle_id' => $bundle->id,
             'original' => $original,
             'filesize' => 7,
             'fullpath' => $bundle->slug.'/'.sha1($original),
             'filename' => sha1($original),
-            'created_at' => time(),
             'status' => true,
         ]);
     }

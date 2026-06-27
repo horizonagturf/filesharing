@@ -26,7 +26,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->stopIgnoring([
+            \Symfony\Component\HttpKernel\Exception\HttpException::class,
+        ]);
+
+        $exceptions->dontReportWhen(function (\Throwable $e) {
+            return $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+                && $e->getStatusCode() < 500;
+        });
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('fs:bundle:purge')->everyFiveMinutes();

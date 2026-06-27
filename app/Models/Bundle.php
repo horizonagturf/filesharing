@@ -2,76 +2,56 @@
 
 namespace App\Models;
 
+use App\Enums\BundleStatus;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Schema\Blueprint;
-use Orbit\Concerns\Orbital;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Bundle extends Model
 {
-    use Orbital;
-
-    public $incrementing = false;
-
-    public $fillable = [
-        'user_username',
-        'created_at',
-        'completed',
-        'expiry',
-        'expires_at',
-        'password',
+    protected $fillable = [
+        'user_id',
         'slug',
+        'title',
+        'description',
+        'password',
         'owner_token',
         'preview_token',
         'fullsize',
-        'title',
-        'description',
         'max_downloads',
         'downloads',
+        'completed',
+        'status',
+        'expiry',
+        'expires_at',
         'preview_link',
         'download_link',
         'deletion_link',
     ];
 
-    protected $casts = [
-        'expires_at' => 'datetime:Y-m-d',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'completed' => 'boolean',
+            'status' => BundleStatus::class,
+            'expires_at' => 'datetime',
+            'fullsize' => 'integer',
+            'max_downloads' => 'integer',
+            'downloads' => 'integer',
+        ];
+    }
 
-    public function getKeyName()
+    public function getRouteKeyName(): string
     {
         return 'slug';
     }
 
-    public function getIncrementing()
-    {
-        return false;
-    }
-
-    public static function schema(Blueprint $table)
-    {
-        $table->string('slug');
-        $table->string('title')->nullable();
-        $table->longText('description')->nullable();
-        $table->string('password')->nullable();
-        $table->string('owner_token');
-        $table->string('preview_token');
-        $table->integer('fullsize')->default(0);
-        $table->integer('max_downloads')->nullable();
-        $table->integer('downloads')->default(0);
-        $table->boolean('completed')->default(false);
-        $table->integer('expiry')->default(0);
-        $table->timestamp('expires_at')->nullable();
-        $table->string('preview_link')->nullable();
-        $table->string('download_link')->nullable();
-        $table->string('deletion_link')->nullable();
-        $table->string('user_username')->nullable();
-    }
-
-    public function files()
+    public function files(): HasMany
     {
         return $this->hasMany(File::class);
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
