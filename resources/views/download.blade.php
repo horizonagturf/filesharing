@@ -29,11 +29,8 @@
 					return null
 				}
 
-				if (typeof expiresAt === 'number' || (typeof expiresAt === 'string' && /^\d+$/.test(expiresAt))) {
-					return dayjs.unix(Number(expiresAt))
-				}
-
-				return dayjs(expiresAt)
+				const parsed = dayjs(expiresAt)
+				return parsed.isValid() ? parsed : null
 			},
 
 			updateTimes: function() {
