@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Exceptions\SsoAuthenticationException;
 use App\Models\User;
 use SocialiteProviders\Manager\OAuth2\User as AzureSocialiteUser;
 
@@ -20,10 +21,10 @@ class MicrosoftSsoProvisioner
         $email = $this->validator->resolveEmail($azureUser);
         $name = $azureUser->getName();
 
-        $user = User::query()
-            ->where('azure_oid', $azureOid)
-            ->orWhere('email', $email)
-            ->first();
+        $userByOid = User::query()->where('azure_oid', $azureOid)->first();
+        $userByEmail = User::query()->where('email', $email)->first();
+
+        $user = $this->resolveExistingUser($userByOid, $userByEmail);
 
         if ($user === null) {
             $user = User::create([
@@ -48,6 +49,25 @@ class MicrosoftSsoProvisioner
         ]);
 
         return $user->fresh();
+    }
+
+    private function resolveExistingUser(?User $userByOid, ?User $userByEmail): ?User
+    {
+        if ($userByOid === null && $userByEmail === null) {
+            return null;
+        }
+
+        if ($userByOid !== null && $userByEmail !== null && $userByOid->id !== $userByEmail->id) {
+            if ($userByEmail->azure_oid === null) {
+                $userByOid->update(['azure_oid' => null]);
+
+                return $userByEmail;
+            }
+
+            throw new SsoAuthenticationException('sso-error-account-conflict');
+        }
+
+        return $userByOid ?? $userByEmail;
     }
 
     private function deriveUsername(string $email): string
