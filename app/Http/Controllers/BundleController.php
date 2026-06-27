@@ -108,7 +108,7 @@ class BundleController extends Controller
 					flush();
 					sleep(1);
 				}
-				fclose($filename);
+				fclose($fh);
 			}
 			else {
 				readfile($filename);
