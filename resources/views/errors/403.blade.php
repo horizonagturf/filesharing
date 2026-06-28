@@ -1,10 +1,13 @@
 @extends('layout')
 
 @section('content')
-
-	<div class="my-10 text-center text-base font-title uppercase text-primary">
-		<h1 class="text-7xl mb-0 font-black">403</h1>
-		@lang('app.permission-denied')
-	</div>
-
+    <x-ui.empty-state
+        icon="shield-exclamation"
+        :title="__('app.permission-denied')"
+    >
+        <p class="text-6xl font-bold text-primary">403</p>
+        <x-ui.button variant="secondary" href="{{ route('homepage') }}" class="mt-4" icon="arrow-left" icon-position="left">
+            @lang('app.nav-home')
+        </x-ui.button>
+    </x-ui.empty-state>
 @endsection

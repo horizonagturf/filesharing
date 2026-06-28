@@ -3,39 +3,49 @@
 @section('page_title', __('approval.queue-title'))
 
 @section('content')
-	<div class="p-5">
-		<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
-			@lang('approval.queue-title')
-		</h2>
+    <x-ui.page-header :title="__('approval.queue-title')" />
 
-		@if ($requests->isEmpty())
-			<p class="text-center text-slate-500">@lang('approval.queue-empty')</p>
-		@else
-			<ul class="divide-y divide-primary-superlight">
-				@foreach ($requests as $request)
-					<li class="py-4 flex flex-wrap items-center justify-between gap-2">
-						<div>
-							<p class="font-medium text-primary">
-								{{ $request->bundle->title ?? __('approval.untitled-bundle') }}
-							</p>
-							<p class="text-xs text-slate-500">
-								@lang('approval.submitted-by'):
-								{{ $request->requester->name ?? $request->requester->username }}
-								&middot;
-								{{ $request->created_at->diffForHumans() }}
-								&middot;
-								{{ $request->bundle->files->count() }} @lang('app.files')
-							</p>
-						</div>
-						<a
-							href="{{ route('approval.show', $request) }}"
-							class="text-sm border px-4 py-2 border-primary rounded hover:bg-primary hover:text-white text-primary"
-						>
-							@lang('approval.review-bundle')
-						</a>
-					</li>
-				@endforeach
-			</ul>
-		@endif
-	</div>
+    @if ($requests->isEmpty())
+        <x-ui.empty-state
+            icon="clipboard-document-list"
+            :title="__('approval.queue-empty')"
+        />
+    @else
+        <div class="overflow-hidden rounded-lg ring-1 ring-gray-950/5">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.upload-title')</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">@lang('approval.submitted-by')</th>
+                        <th scope="col" class="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 sm:table-cell">@lang('app.files')</th>
+                        <th scope="col" class="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 md:table-cell">@lang('app.created-at')</th>
+                        <th scope="col" class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 bg-white">
+                    @foreach ($requests as $request)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3">
+                                <p class="text-sm font-medium text-gray-900">{{ $request->bundle->title ?? __('approval.untitled-bundle') }}</p>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600">
+                                {{ $request->requester->name ?? $request->requester->username }}
+                            </td>
+                            <td class="hidden px-4 py-3 text-sm text-gray-500 sm:table-cell">
+                                {{ $request->bundle->files->count() }}
+                            </td>
+                            <td class="hidden px-4 py-3 text-sm text-gray-500 md:table-cell">
+                                {{ $request->created_at->diffForHumans() }}
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <x-ui.button variant="ghost" size="sm" href="{{ route('approval.show', $request) }}" icon="chevron-right">
+                                    @lang('approval.review-bundle')
+                                </x-ui.button>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 @endsection

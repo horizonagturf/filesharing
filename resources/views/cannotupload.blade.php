@@ -1,7 +1,9 @@
 @extends('layout')
 
 @section('content')
-	<div class="my-10 text-center text-base font-title uppercase text-primary">
-		@lang('app.cannot-upload-blocked-ip')
-	</div>
+    <x-ui.empty-state
+        icon="shield-exclamation"
+        :title="__('app.cannot-upload')"
+        :description="__('app.cannot-upload-blocked-ip')"
+    />
 @endsection

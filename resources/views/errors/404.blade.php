@@ -1,10 +1,13 @@
 @extends('layout')
 
 @section('content')
-
-	<div class="my-10 text-center text-base font-title uppercase text-primary">
-		<h1 class="text-7xl mb-0 font-black">404</h1>
-		@lang('app.page-not-found')
-	</div>
-
+    <x-ui.empty-state
+        icon="folder-open"
+        :title="__('app.page-not-found')"
+    >
+        <p class="text-6xl font-bold text-primary">404</p>
+        <x-ui.button variant="secondary" href="{{ route('homepage') }}" class="mt-4" icon="arrow-left" icon-position="left">
+            @lang('app.nav-home')
+        </x-ui.button>
+    </x-ui.empty-state>
 @endsection

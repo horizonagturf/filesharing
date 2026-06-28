@@ -1,200 +1,97 @@
 @extends('layout')
 
-
 @push('scripts')
 <script>
-	let bundles = @js($bundles)
-
-	document.addEventListener('alpine:init', () => {
-		Alpine.data('bundle', () => ({
-			bundles: [],
-			drafts: [],
-			awaitingApproval: [],
-			denied: [],
-			active: [],
-			expired: [],
-			currentBundle: null,
-			ownerToken: null,
-			parseExpiresAt: function(expiresAt) {
-				if (expiresAt == null || expiresAt === '') {
-					return null
-				}
-
-				const parsed = dayjs(expiresAt)
-				return parsed.isValid() ? parsed : null
-			},
-
-			init: function() {
-				// Generating anonymous owner token
-				this.ownerToken = localStorage.getItem('owner_token')
-				if (this.ownerToken === null) {
-					this.ownerToken = this.generateStr(15)
-					localStorage.setItem('owner_token', this.ownerToken)
-				}
-
-				// Loading existing bundles
-				this.bundles = bundles
-
-				if (this.bundles != null && Object.keys(this.bundles).length > 0) {
-					this.bundles.forEach( (bundle) => {
-						if (bundle.title == null || bundle.title == '') {
-							bundle.label = 'untitled'
-						}
-						else {
-							bundle.label = bundle.title
-						}
-
-						if (bundle.status_label) {
-							bundle.label += ' [' + bundle.status_label + ']'
-						}
-
-						const expiresAt = this.parseExpiresAt(bundle.expires_at)
-						if (expiresAt != null && expiresAt.isValid() && expiresAt.isBefore(dayjs())) {
-							this.expired.push(bundle)
-						}
-						else if (bundle.status === 'pending_approval') {
-							this.awaitingApproval.push(bundle)
-						}
-						else if (bundle.status === 'denied') {
-							this.denied.push(bundle)
-						}
-						else if (bundle.status === 'approved' || bundle.status === 'sent' || bundle.completed == true) {
-							this.active.push(bundle)
-						}
-						else {
-							this.drafts.push(bundle)
-						}
-						bundle.label += ' - {{ __('app.created-at') }} '+dayjs(bundle.created_at).fromNow()
-					})
-				}
-			},
-
-			newBundle: function() {
-				axios({
-					url: BASE_URL+'/new',
-					method: 'POST'
-				})
-				.then( (response) => {
-					if (response.data.result === true) {
-						window.location.href = response.data.redirect
-					}
-				})
-				.catch( (error) => {
-					//TODO: do something here
-				})
-			},
-
-			generateStr: function(length) {
-				const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-				let result = '';
-				const charactersLength = characters.length;
-				for ( let i = 0; i < length; i++ ) {
-					result += characters.charAt(Math.floor(Math.random() * charactersLength));
-				}
-
-				return result;
-			},
-
-			redirectToBundle: function() {
-				if (this.currentBundle != null) {
-					window.location.href = BASE_URL+'/upload/'+this.currentBundle
-				}
-			},
-
-			isBundleExpired: function(bundle = null) {
-				const expiresAt = this.parseExpiresAt(bundle?.expires_at)
-				if (expiresAt == null || ! expiresAt.isValid()) {
-					return false;
-				}
-
-				return expiresAt.isBefore(dayjs())
-			},
-		}))
-	})
+    window.__bundles = @js($bundles);
+    window.__createdAtLabel = @js(__('app.created-at'));
+    window.__pendingLabel = @js(__('app.pending'));
+    window.__pendingApprovalLabel = @js(__('approval.status-pending_approval'));
+    window.__deniedLabel = @js(__('approval.status-denied'));
+    window.__activeLabel = @js(__('app.active'));
+    window.__expiredLabel = @js(__('app.expired'));
 </script>
 @endpush
 
 @section('content')
-	<div x-data="bundle">
-		<div class="p-5">
+    <div x-data="bundle">
+        <x-ui.page-header :title="__('app.existing-bundles')">
+            <x-slot:actions>
+                <x-ui.badge variant="primary" x-show="hasBundles()" x-text="bundles.length"></x-ui.badge>
+                <x-ui.button
+                    variant="primary"
+                    icon="plus"
+                    x-on:click="newBundle()"
+                    ::disabled="loading"
+                >
+                    @lang('app.create-new-upload')
+                </x-ui.button>
+            </x-slot:actions>
+        </x-ui.page-header>
 
-			<div>
-				<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase flex items-center">
-					<p>@lang('app.existing-bundles')</p>
-					<p class="text-sm bg-primary rounded-full ml-2 text-white px-3" x-text="Object.keys(bundles).length"></p>
-				</h2>
+        @auth
+            <template x-if="! hasBundles()">
+                <x-ui.empty-state
+                    icon="folder-open"
+                    :title="__('app.no-existing-bundle')"
+                    :description="__('app.or-create')"
+                >
+                    <x-ui.button variant="primary" icon="plus" x-on:click="newBundle()" ::disabled="loading">
+                        @lang('app.create-new-upload')
+                    </x-ui.button>
+                </x-ui.empty-state>
+            </template>
 
-				@auth
-					<p class="text-center">
-						<span x-show="bundles == null || Object.keys(bundles).length == 0">@lang('app.no-existing-bundle')</span>
-					</p>
-
-					<select
-						class="w-full text-slate-700 bg-transparent h-8 p-0 py-1 border-b border-primary-superlight focus:ring-0 invalid:border-b-red-500 invalid:bg-red-50"
-						name="expiry"
-						id="upload-expiry"
-						x-model="currentBundle"
-						x-on:change="redirectToBundle()"
-						x-show="bundles != null && Object.keys(bundles).length > 0"
-					>
-						<option>-</option>
-
-						<template x-if="Object.keys(drafts).length > 0">
-							<optgroup label="{{ __('app.pending') }}">
-								<template x-for="bundle in drafts">
-									<option :value="bundle.slug" x-text="bundle.label"></option>
-								</template>
-							</optgroup>
-						</template>
-
-						<template x-if="Object.keys(awaitingApproval).length > 0">
-							<optgroup label="{{ __('approval.status-pending_approval') }}">
-								<template x-for="bundle in awaitingApproval">
-									<option :value="bundle.slug" x-text="bundle.label"></option>
-								</template>
-							</optgroup>
-						</template>
-
-						<template x-if="Object.keys(denied).length > 0">
-							<optgroup label="{{ __('approval.status-denied') }}">
-								<template x-for="bundle in denied">
-									<option :value="bundle.slug" x-text="bundle.label"></option>
-								</template>
-							</optgroup>
-						</template>
-
-						<template x-if="Object.keys(active).length > 0">
-							<optgroup label="{{ __('app.active') }}">
-								<template x-for="bundle in active">
-									<option :value="bundle.slug" x-text="bundle.label"></option>
-								</template>
-							</optgroup>
-						</template>
-
-						<template x-if="Object.keys(expired).length > 0">
-							<optgroup label="{{ __('app.expired') }}">
-								<template x-for="bundle in expired">
-									<option :value="bundle.slug" x-text="bundle.label"></option>
-								</template>
-							</optgroup>
-						</template>
-					</select>
-				@else
-					<p class="text-center">
-						<a href="{{ route('login') }}" class="text-primary font-bold hover:underline">@lang('app.do-login')</a>
-						@lang('app.to-get-bundles')
-					</p>
-				@endauth
-			</div>
-
-			<h2 class="mt-10 font-title text-2xl mb-5 text-primary font-medium uppercase">@lang('app.or-create')</h2>
-
-			<div class="my-8 text-center text-base font-title uppercase text-primary">
-				<a x-on:click="newBundle()" class="cursor-pointer border px-5 py-3 border-primary rounded hover:bg-primary hover:text-white text-primary">
-					@lang('app.create-new-upload')
-				</a>
-			</div>
-		</div>
-	</div>
+            <template x-if="hasBundles()">
+                <div class="space-y-6">
+                    <template x-for="group in allGrouped()" :key="group.key">
+                        <div>
+                            <h3 class="mb-2 text-sm font-semibold text-gray-700" x-text="group.label"></h3>
+                            <div class="overflow-hidden rounded-lg ring-1 ring-gray-950/5">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.upload-title')</th>
+                                            <th scope="col" class="hidden px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500 sm:table-cell">@lang('app.created-at')</th>
+                                            <th scope="col" class="px-4 py-2 text-right text-xs font-medium uppercase tracking-wide text-gray-500"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 bg-white">
+                                        <template x-for="bundle in group.items" :key="bundle.slug">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-3">
+                                                    <p class="text-sm font-medium text-gray-900" x-text="bundle.title || 'untitled'"></p>
+                                                    <p class="text-xs text-gray-500 sm:hidden" x-text="dayjs(bundle.created_at).fromNow()"></p>
+                                                </td>
+                                                <td class="hidden px-4 py-3 text-sm text-gray-500 sm:table-cell" x-text="dayjs(bundle.created_at).fromNow()"></td>
+                                                <td class="px-4 py-3 text-right">
+                                                    <x-ui.button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="chevron-right"
+                                                        x-on:click="openBundle(bundle.slug)"
+                                                    >
+                                                        @lang('app.open')
+                                                    </x-ui.button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        @else
+            <x-ui.empty-state
+                icon="folder-open"
+                :title="__('app.no-existing-bundle')"
+            >
+                <p class="text-sm text-gray-500">
+                    <a href="{{ route('login') }}" class="font-semibold text-primary hover:underline">@lang('app.do-login')</a>
+                    @lang('app.to-get-bundles')
+                </p>
+            </x-ui.empty-state>
+        @endauth
+    </div>
 @endsection

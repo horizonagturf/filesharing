@@ -1,181 +1,74 @@
 @extends('layout')
 
-@section('page_title', $metadata['title'] ?? null)
+@section('page_title', $metadata['title'] ?? __('app.preview-bundle'))
 
 @push('scripts')
 <script>
-	let bundle  		= @js($bundle);
-	let bundle_expires	= '{{ __('app.warning-bundle-expiration') }}'
-	let bundle_expired	= '{{ __('app.warning-bundle-expired') }}'
-
-	document.addEventListener('alpine:init', () => {
-		Alpine.data('download', () => ({
-			metadata: @js($bundle),
-			created_at: null,
-			expires_at: null,
-			expired: null,
-			interval: null,
-
-			init: function() {
-				this.updateTimes()
-
-				this.interval = window.setInterval( () => {
-					this.updateTimes()
-				}, 5000)
-
-			},
-			parseExpiresAt: function(expiresAt) {
-				if (expiresAt == null || expiresAt === '') {
-					return null
-				}
-
-				const parsed = dayjs(expiresAt)
-				return parsed.isValid() ? parsed : null
-			},
-
-			updateTimes: function() {
-				this.created_at = dayjs(this.metadata.created_at).fromNow()
-
-				if (this.metadata.expiry) {
-					if (! this.isExpired()) {
-						const expiresAt = this.parseExpiresAt(this.metadata.expires_at)
-						this.expires_at = expiresAt != null && expiresAt.isValid() ? expiresAt.fromNow() : null
-					}
-				}
-			},
-
-			isExpired: function() {
-				const expiresAt = this.parseExpiresAt(this.metadata.expires_at)
-				if (expiresAt == null || ! expiresAt.isValid()) {
-					this.expired = false
-					return false
-				}
-
-				if (dayjs().isAfter(expiresAt)) {
-					this.expired = true
-					return true
-				}
-				else {
-					this.expired = false
-					return false
-				}
-			},
-
-			humanSize: function(val) {
-				if (val >= 100000000) {
-					return (val / 1000000000).toFixed(1) + ' Go'
-				}
-				else if (val >= 1000000) {
-					return (val / 1000000).toFixed(1) + ' Mo'
-				}
-				else if (val >= 1000) {
-					return (val / 1000).toFixed(1) + ' Ko'
-				}
-				else {
-					return val + ' o'
-				}
-			},
-
-			downloadAll: function() {
-				window.location.href = this.metadata.download_link
-			}
-		}))
-	})
-
+    window.__bundle = @js($bundle);
 </script>
 @endpush
 
 @section('content')
-	<div x-data="download">
+    <div x-data="download">
+        <x-ui.page-header :title="__('app.preview-bundle')">
+            <x-slot:actions>
+                <x-ui.button variant="primary" icon="download" x-on:click="downloadAll()" x-show="! expired">
+                    @lang('app.download-all')
+                </x-ui.button>
+            </x-slot:actions>
+        </x-ui.page-header>
 
-		<div class="p-5">
-			<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
-				@lang('app.preview-bundle')
-			</h2>
+        <template x-if="expired">
+            <x-ui.alert variant="warning" class="mb-4">@lang('app.warning-bundle-expired')</x-ui.alert>
+        </template>
 
-			<div class="flex flex-wrap justify-between items-center text-xs">
-				<p class="w-full px-1">
-					<span class="font-title text-xs text-primary uppercase mr-1">
-						@lang('app.upload-title')
-					</span>
-					<span x-text="metadata.title"></span>
-				</p>
-				<p class="w-1/2 px-1 mt-1">
-					<span class="font-title text-xs text-primary uppercase mr-1">
-						@lang('app.created-at')
-					</span>
-					<span x-text="created_at"></span>
-				</p>
-				<p class="w-1/2 px-1 mt-1">
-					<span class="font-title text-xs text-primary uppercase mr-1">
-						@lang('app.upload-expiry')
-					</span>
-					<template x-if="expires_at">
-						<span x-text="expires_at"></span>
-					</template>
-					<template x-if="! expires_at">
-						<span>@lang('app.forever')</span>
-					</template>
-				</p>
-				<p class="w-1/2 px-1 mt-1">
-					<span class="font-title text-xs text-primary uppercase mr-1">
-						@lang('app.files')
-					</span>
-					<span x-text="Object.keys(metadata.files).length"></span>
-				</p>
-				<p class="w-1/2 px-1 mt-1">
-					<span class="font-title text-xs text-primary uppercase mr-1">
-						@lang('app.fullsize')
-					</span>
-					<span x-text="humanSize(metadata.fullsize)"></span>
-				</p>
-				<p class="w-1/2 px-1 mt-1">
-					<span class="font-title text-xs text-primary uppercase mr-1">
-						@lang('app.current-downloads')
-					</span>
-					<span x-text="metadata.downloads"></span>
-				</p>
-				<p class="w-1/2 px-1 mt-1">
-					<span class="font-title text-xs text-primary uppercase mr-1">
-						@lang('app.max-downloads')
-					</span>
-					<span x-text="metadata.max_downloads > 0 ? metadata.max_downloads : '∞'"></span>
-				</p>
-				<p class="w-full px-1 mt-1" x-show="metadata.description">
-					<span class="font-title text-xs text-primary uppercase mr-1">
-						@lang('app.upload-description')
-					</span>
-					<span x-html="metadata.description_html"></span>
-				</p>
-			</div>
+        <dl class="mb-6 grid gap-4 sm:grid-cols-2">
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.upload-title')</dt>
+                <dd class="mt-1 text-sm text-gray-900" x-text="metadata.title"></dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.created-at')</dt>
+                <dd class="mt-1 text-sm text-gray-900" x-text="created_at"></dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.upload-expiry')</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                    <template x-if="expires_at"><span x-text="expires_at"></span></template>
+                    <template x-if="! expires_at"><span>@lang('app.forever')</span></template>
+                </dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.files')</dt>
+                <dd class="mt-1 text-sm text-gray-900" x-text="Object.keys(metadata.files).length"></dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.fullsize')</dt>
+                <dd class="mt-1 text-sm text-gray-900" x-text="humanSize(metadata.fullsize)"></dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.current-downloads')</dt>
+                <dd class="mt-1 text-sm text-gray-900" x-text="metadata.downloads"></dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.max-downloads')</dt>
+                <dd class="mt-1 text-sm text-gray-900" x-text="metadata.max_downloads > 0 ? metadata.max_downloads : '∞'"></dd>
+            </div>
+            <div class="sm:col-span-2" x-show="metadata.description">
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.upload-description')</dt>
+                <dd class="prose prose-sm mt-1 max-w-none text-gray-700" x-html="metadata.description_html"></dd>
+            </div>
+        </dl>
 
-			<div>
-				<h2 class="font-title font-xs uppercase text-primary px-1 mt-5">Files</h2>
-			</div>
+        <h3 class="mb-2 text-sm font-semibold text-gray-900">@lang('app.files-list')</h3>
 
-			<ul id="output" class="text-xs mt-1 max-h-32 overflow-y-scroll pb-3" x-show="Object.keys(metadata.files).length > 0">
-				<template x-for="f in metadata.files" :key="f.uuid">
-					<li class="leading-5 list-inside even:bg-gray-50 rounded px-2">
-						<p class="float-left w-9/12 overflow-hidden" x-text="f.original.substring(0, 40)"></p>
-						<p class="float-right w-2/12 text-right" float-right text-xs" x-text="humanSize(f.filesize)"></p>
-						<span class="clear-both">&nbsp;</span>
-					</li>
-				</template>
-			</ul>
-
-			<div class="grid grid-cols-2 gap-10 mt-10 text-center items-center">
-				<div>
-					&nbsp;
-				</div>
-				<div>
-					@include('partials.button', [
-						'way'		=> 'right',
-						'text'		=> __('app.download-all'),
-						'icon'		=> '<path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 004.5 9.75v7.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-7.5a2.25 2.25 0 00-2.25-2.25h-.75m-6 3.75l3 3m0 0l3-3m-3 3V1.5m6 9h.75a2.25 2.25 0 012.25 2.25v7.5a2.25 2.25 0 01-2.25 2.25h-7.5a2.25 2.25 0 01-2.25-2.25v-.75" />',
-						'action'	=> 'downloadAll'
-					])
-				</div>
-			</div>
-		</div>
-	</div>
+        <ul class="max-h-48 divide-y divide-gray-100 overflow-y-auto rounded-lg ring-1 ring-gray-950/5" x-show="Object.keys(metadata.files).length > 0">
+            <template x-for="f in metadata.files" :key="f.uuid">
+                <li class="flex items-center justify-between px-4 py-2 text-sm even:bg-gray-50">
+                    <span class="truncate text-gray-900" x-text="f.original"></span>
+                    <span class="ml-4 shrink-0 text-gray-500" x-text="humanSize(f.filesize)"></span>
+                </li>
+            </template>
+        </ul>
+    </div>
 @endsection

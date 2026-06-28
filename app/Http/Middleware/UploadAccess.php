@@ -29,6 +29,10 @@ class UploadAccess
             abort(401);
         }
 
+        if (! config('sso.enabled') && ! empty(config('sharing.upload_ip_limit'))) {
+            return response()->view('cannotupload');
+        }
+
         return response()->view('login');
     }
 }

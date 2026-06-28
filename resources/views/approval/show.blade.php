@@ -4,135 +4,91 @@
 
 @push('scripts')
 <script>
-	document.addEventListener('alpine:init', () => {
-		Alpine.data('review', () => ({
-			denyForm: false,
-			reason: '',
-			error: null,
-			modal: { show: false, text: '', action: null },
-
-			showModal: function(text, action) {
-				this.modal.text = text
-				this.modal.action = action
-				this.modal.show = true
-			},
-
-			confirmModal: function() {
-				this.modal.show = false
-				if (this.modal.action) {
-					this.modal.action()
-				}
-			},
-
-			approve: function() {
-				this.showModal('{{ __('approval.confirm-approve') }}', () => {
-					axios.post('{{ route('approval.approve', $approvalRequest) }}')
-						.then(() => { window.location.href = '{{ route('approval.index') }}' })
-						.catch((error) => {
-							this.error = error.response?.data?.message ?? '{{ __('app.unexpected-error') }}'
-						})
-				})
-			},
-
-			submitDeny: function() {
-				if (! this.reason || this.reason.trim().length < 3) {
-					this.error = '{{ __('approval.deny-reason-required') }}'
-					return
-				}
-
-				this.showModal('{{ __('approval.confirm-deny') }}', () => {
-					axios.post('{{ route('approval.deny', $approvalRequest) }}', { reason: this.reason })
-						.then(() => { window.location.href = '{{ route('approval.index') }}' })
-						.catch((error) => {
-							this.error = error.response?.data?.message ?? '{{ __('app.unexpected-error') }}'
-						})
-				})
-			},
-		}))
-	})
+    window.__confirmApprove = @js(__('approval.confirm-approve'));
+    window.__confirmDeny = @js(__('approval.confirm-deny'));
+    window.__denyReasonRequired = @js(__('approval.deny-reason-required'));
+    window.__unexpectedError = @js(__('app.unexpected-error'));
+    window.__approveUrl = @js(route('approval.approve', $approvalRequest));
+    window.__denyUrl = @js(route('approval.deny', $approvalRequest));
+    window.__approvalIndexUrl = @js(route('approval.index'));
 </script>
 @endpush
 
 @section('content')
-	<div x-data="review" class="p-5">
-		{{-- Modal --}}
-		<template x-if="modal.show">
-			<div class="absolute z-40 top-0 left-0 right-0 bottom-0 w-full bg-[#848A97EE]">
-				<div class="absolute z-50 top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white w-3/4 md:w-1/2 p-6 text-center shadow-lg border-2 border-gray-300">
-					<p class="mt-4 font-title font-medium text-primary text-lg">{{ __('app.confirmation') }}</p>
-					<div class="mb-6 text-gray-500" x-text="modal.text"></div>
-					<div class="flex justify-center gap-4">
-						<button class="bg-gray-300 text-black rounded px-3 py-1" x-on:click="modal.show = false">{{ __('app.cancel') }}</button>
-						<button class="bg-primary text-white rounded px-3 py-1" x-on:click="confirmModal()">{{ __('app.confirm') }}</button>
-					</div>
-				</div>
-			</div>
-		</template>
+    <div x-data="review">
+        <template x-if="modal.show">
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                <div class="fixed inset-0 bg-gray-500/75" x-on:click="modal.show = false"></div>
+                <div class="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl ring-1 ring-gray-950/5">
+                    <h3 class="text-base font-semibold text-gray-900">@lang('app.confirmation')</h3>
+                    <p class="mt-2 text-sm text-gray-600" x-text="modal.text"></p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <x-ui.button variant="secondary" size="sm" x-on:click="modal.show = false">@lang('app.cancel')</x-ui.button>
+                        <x-ui.button variant="primary" size="sm" x-on:click="confirmModal()" ::disabled="loading">@lang('app.confirm')</x-ui.button>
+                    </div>
+                </div>
+            </div>
+        </template>
 
-		<h2 class="font-title text-2xl mb-2 text-primary font-medium uppercase">
-			{{ $approvalRequest->bundle->title ?? __('approval.untitled-bundle') }}
-		</h2>
+        <x-ui.page-header
+            :title="$approvalRequest->bundle->title ?? __('approval.untitled-bundle')"
+            :subtitle="__('approval.submitted-by').': '.($approvalRequest->requester->name ?? $approvalRequest->requester->username).' · '.__('approval.submitted-at').': '.$approvalRequest->created_at->format('Y-m-d H:i')"
+        />
 
-		<p class="text-xs text-slate-500 mb-5">
-			@lang('approval.submitted-by'):
-			{{ $approvalRequest->requester->name ?? $approvalRequest->requester->username }}
-			&middot;
-			@lang('approval.submitted-at'): {{ $approvalRequest->created_at->format('Y-m-d H:i') }}
-		</p>
+        <div class="grid gap-6 lg:grid-cols-3">
+            <div class="space-y-6 lg:col-span-2">
+                @if ($approvalRequest->bundle->description)
+                    <div class="prose prose-sm max-w-none text-gray-700">
+                        {!! \Illuminate\Support\Str::markdown($approvalRequest->bundle->description) !!}
+                    </div>
+                @endif
 
-		@if ($approvalRequest->bundle->description)
-			<div class="mb-5 prose prose-sm max-w-none text-slate-700">
-				{!! \Illuminate\Support\Str::markdown($approvalRequest->bundle->description) !!}
-			</div>
-		@endif
+                <div>
+                    <h3 class="mb-2 text-sm font-semibold text-gray-900">@lang('app.files-list')</h3>
+                    <ul class="divide-y divide-gray-100 rounded-lg ring-1 ring-gray-950/5">
+                        @foreach ($approvalRequest->bundle->files as $file)
+                            <li class="flex items-center justify-between px-4 py-2 text-sm">
+                                <span class="truncate text-gray-900">{{ $file->original }}</span>
+                                <span class="ml-4 shrink-0 text-gray-500">{{ number_format($file->filesize / 1000000, 1) }} MB</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
 
-		<h3 class="font-title text-base mb-2 text-primary font-medium uppercase">@lang('app.files-list')</h3>
-		<ul class="text-xs mb-8 divide-y divide-gray-100">
-			@foreach ($approvalRequest->bundle->files as $file)
-				<li class="py-1 flex justify-between">
-					<span>{{ $file->original }}</span>
-					<span class="text-slate-400">{{ number_format($file->filesize / 1000000, 1) }} MB</span>
-				</li>
-			@endforeach
-		</ul>
+            <div class="space-y-4">
+                <template x-if="error">
+                    <x-ui.alert variant="danger" x-text="error"></x-ui.alert>
+                </template>
 
-		<p x-show="error" x-text="error" class="text-red-600 text-sm mb-4"></p>
+                <div class="rounded-lg bg-gray-50 p-4 ring-1 ring-gray-950/5">
+                    <div class="flex flex-col gap-2">
+                        <x-ui.button variant="success" x-on:click="approve()" ::disabled="loading" class="w-full justify-center">
+                            @lang('approval.approve')
+                        </x-ui.button>
+                        <x-ui.button variant="danger" x-on:click="denyForm = !denyForm" class="w-full justify-center">
+                            @lang('approval.deny')
+                        </x-ui.button>
+                        <x-ui.button variant="ghost" href="{{ route('approval.index') }}" class="w-full justify-center" icon="arrow-left" icon-position="left">
+                            @lang('app.back')
+                        </x-ui.button>
+                    </div>
+                </div>
 
-		<div class="flex flex-wrap gap-3">
-			<button
-				x-on:click="approve()"
-				class="border px-5 py-2 border-green-600 rounded hover:bg-green-600 hover:text-white text-green-700"
-			>
-				@lang('approval.approve')
-			</button>
-			<button
-				x-on:click="denyForm = !denyForm"
-				class="border px-5 py-2 border-red-600 rounded hover:bg-red-600 hover:text-white text-red-700"
-			>
-				@lang('approval.deny')
-			</button>
-			<a href="{{ route('approval.index') }}" class="border px-5 py-2 border-gray-300 rounded text-gray-600 hover:bg-gray-100">
-				@lang('app.back')
-			</a>
-		</div>
-
-		<div x-show="denyForm" x-cloak class="mt-5">
-			<label class="font-title uppercase text-sm text-primary block mb-1" for="deny-reason">
-				@lang('approval.deny-reason') <span class="text-base">*</span>
-			</label>
-			<textarea
-				id="deny-reason"
-				x-model="reason"
-				rows="3"
-				class="w-full border border-primary-superlight rounded p-2 text-slate-700"
-				placeholder="{{ __('approval.deny-reason-placeholder') }}"
-			></textarea>
-			<button
-				x-on:click="submitDeny()"
-				class="mt-2 border px-5 py-2 border-red-600 rounded hover:bg-red-600 hover:text-white text-red-700"
-			>
-				@lang('approval.deny')
-			</button>
-		</div>
-	</div>
+                <div x-show="denyForm" x-cloak class="space-y-3">
+                    <x-ui.textarea
+                        id="deny-reason"
+                        rows="3"
+                        :label="__('approval.deny-reason')"
+                        required
+                        x-model="reason"
+                        :placeholder="__('approval.deny-reason-placeholder')"
+                    />
+                    <x-ui.button variant="danger" x-on:click="submitDeny()" ::disabled="loading" class="w-full justify-center">
+                        @lang('approval.deny')
+                    </x-ui.button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection

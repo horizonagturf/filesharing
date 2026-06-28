@@ -1,11 +1,68 @@
-@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer components {
-    /* Microsoft identity platform — light-theme "Sign in with Microsoft" button */
+    .fi-btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .fi-btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-300 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .fi-btn-danger {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-red-300 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .fi-btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    }
+
+    .fi-btn-link {
+        @apply inline-flex items-center gap-1 text-sm font-semibold text-primary underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded;
+    }
+
+    .fi-input {
+        @apply block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500;
+    }
+
+    .fi-input-error {
+        @apply ring-red-300 focus:ring-red-500;
+    }
+
+    .fi-label {
+        @apply block text-sm font-medium leading-6 text-gray-700;
+    }
+
+    .fi-section {
+        @apply rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5;
+    }
+
+    .fi-badge {
+        @apply inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset;
+    }
+
+    .fi-badge-primary {
+        @apply fi-badge bg-primary/10 text-primary ring-primary/20;
+    }
+
+    .fi-badge-success {
+        @apply fi-badge bg-green-50 text-green-700 ring-green-600/20;
+    }
+
+    .fi-badge-warning {
+        @apply fi-badge bg-amber-50 text-amber-800 ring-amber-600/20;
+    }
+
+    .fi-badge-danger {
+        @apply fi-badge bg-red-50 text-red-700 ring-red-600/20;
+    }
+
+    .fi-badge-gray {
+        @apply fi-badge bg-gray-50 text-gray-600 ring-gray-500/10;
+    }
+
     .ms-sign-in-button {
         display: inline-flex;
         align-items: center;
@@ -45,8 +102,29 @@
 
 @layer utilities {
     .dropzone {
-        @apply border-2 border-primary-light !important;
+        @apply border-2 border-dashed border-primary-light !important;
     }
 
-	[x-cloak] { display: none !important; }
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+/* EasyMDE — bundled Font Awesome icons; match fi-input styling */
+.EasyMDEContainer .editor-toolbar {
+    @apply rounded-t-lg border-0 bg-white shadow-sm ring-1 ring-inset ring-gray-300;
+}
+
+.EasyMDEContainer .CodeMirror {
+    @apply rounded-b-lg border-0 bg-white text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300;
+    min-height: 4rem;
+}
+
+.EasyMDEContainer .CodeMirror-focused {
+    @apply ring-2 ring-inset ring-primary;
+}
+
+.EasyMDEContainer .editor-toolbar.fullscreen,
+.EasyMDEContainer .CodeMirror-fullscreen {
+    @apply rounded-none;
 }
