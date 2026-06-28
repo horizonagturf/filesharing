@@ -26,14 +26,33 @@ class ShareModePolicy
         return $this->sharingSettings->defaultShareMode();
     }
 
-    public function resolveShareMode(?User $user, ?string $requested): ShareMode
+    public function effectiveShareMode(?User $user, ?ShareMode $mode = null): ShareMode
     {
-        $mode = ShareMode::tryFrom((string) $requested) ?? $this->defaultShareMode();
+        $mode ??= $this->defaultShareMode();
 
         if ($mode === ShareMode::StaticLink && ! $this->canUseStaticLinks($user)) {
-            throw new InvalidArgumentException(__('sharing.static-link-not-allowed'));
+            return ShareMode::Invitation;
         }
 
         return $mode;
+    }
+
+    public function resolveShareMode(?User $user, ?string $requested): ShareMode
+    {
+        if ($requested !== null && $requested !== '') {
+            $mode = ShareMode::tryFrom($requested);
+
+            if ($mode === null) {
+                return $this->effectiveShareMode($user);
+            }
+
+            if ($mode === ShareMode::StaticLink && ! $this->canUseStaticLinks($user)) {
+                throw new InvalidArgumentException(__('sharing.static-link-not-allowed'));
+            }
+
+            return $mode;
+        }
+
+        return $this->effectiveShareMode($user);
     }
 }

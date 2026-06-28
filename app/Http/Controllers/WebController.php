@@ -77,7 +77,7 @@ class WebController extends Controller
             $bundle = new Bundle([
                 'user_id' => $user?->id,
                 'status' => BundleStatus::Draft,
-                'share_mode' => $this->shareModePolicy->defaultShareMode(),
+                'share_mode' => $this->shareModePolicy->effectiveShareMode($user),
                 'completed' => false,
                 'expiry' => config('sharing.default-expiry', 86400),
                 'expires_at' => null,

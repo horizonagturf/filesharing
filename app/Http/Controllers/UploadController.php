@@ -52,7 +52,7 @@ class UploadController extends Controller
 
         try {
             if ($requested === null) {
-                $shareMode = $bundle->share_mode ?? $this->shareModePolicy->defaultShareMode();
+                $shareMode = $this->shareModePolicy->effectiveShareMode(Auth::user(), $bundle->share_mode);
             } else {
                 $shareMode = $this->shareModePolicy->resolveShareMode(Auth::user(), $requested);
             }

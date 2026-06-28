@@ -29,6 +29,45 @@ class ShareModeTest extends TestCase
         ]);
     }
 
+    public function test_new_bundle_falls_back_to_invitation_when_org_default_is_static_but_user_lacks_permission(): void
+    {
+        app(SharingSettings::class)->setDefaultShareMode(ShareMode::StaticLink);
+
+        $user = User::factory()->create();
+
+        $this->actingAsUser($user)
+            ->postJson('/new', [], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('bundles', [
+            'user_id' => $user->id,
+            'share_mode' => ShareMode::Invitation->value,
+        ]);
+    }
+
+    public function test_store_bundle_without_share_mode_clamps_existing_static_mode_for_unauthorized_user(): void
+    {
+        app(SharingSettings::class)->setDefaultShareMode(ShareMode::StaticLink);
+
+        $user = User::factory()->create();
+        $bundle = $this->createBundle($user, shareMode: ShareMode::StaticLink);
+
+        $this->actingAsUser($user)
+            ->postJson("/upload/{$bundle->slug}", [
+                'title' => 'Test',
+                'expiry' => '86400',
+                'max_downloads' => 0,
+                'auth' => $bundle->owner_token,
+            ], $this->uploadHeaders($bundle))
+            ->assertOk()
+            ->assertJsonPath('share_mode', ShareMode::Invitation->value);
+
+        $this->assertDatabaseHas('bundles', [
+            'id' => $bundle->id,
+            'share_mode' => ShareMode::Invitation->value,
+        ]);
+    }
+
     public function test_user_without_static_link_group_cannot_select_static_mode(): void
     {
         $user = User::factory()->create();
