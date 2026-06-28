@@ -142,6 +142,29 @@ class OtpPolicyTest extends TestCase
         $this->assertTrue($policy->canChooseOtpSetting($user));
     }
 
+    public function test_upload_settings_shows_otp_instructions_when_user_can_choose(): void
+    {
+        config(['sharing.invitation_require_otp' => true]);
+
+        $user = User::factory()->create();
+        $group = Group::create([
+            'name' => 'No OTP',
+            'slug' => 'no-otp-ui',
+            'requires_approval' => false,
+            'allow_static_links' => false,
+            'allow_invitation_without_otp' => true,
+        ]);
+        $user->groups()->attach($group);
+
+        $bundle = $this->createBundle($user);
+
+        $this->actingAsUser($user)
+            ->get("/upload/{$bundle->slug}")
+            ->assertOk()
+            ->assertSee(__('sharing.require-otp-enabled-info'), false)
+            ->assertSee(__('sharing.require-otp-disabled-warning'), false);
+    }
+
     private function createBundle(User $user): Bundle
     {
         $slug = 'bundle-'.Str::lower(Str::random(8));

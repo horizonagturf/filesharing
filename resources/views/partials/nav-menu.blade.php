@@ -11,7 +11,14 @@
     }
 @endphp
 
-<div class="relative shrink-0" x-data="{ open: false }" x-on:click.outside="open = false">
+<div class="relative shrink-0 flex items-center gap-2" x-data="{ open: false }" x-on:click.outside="open = false">
+    <a
+        href="{{ route('help.index') }}"
+        class="hidden text-sm font-medium text-gray-600 hover:text-primary sm:inline-flex"
+    >
+        @lang('app.nav-help')
+    </a>
+
     @guest
         <a href="{{ route('login') }}" class="fi-btn-secondary !px-3 !py-1.5 !text-xs">
             @lang('app.do-login')
@@ -43,6 +50,14 @@
                 role="menuitem"
             >
                 @lang('app.nav-home')
+            </a>
+
+            <a
+                href="{{ route('help.index') }}"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 {{ request()->routeIs('help.*') ? 'bg-gray-50 font-medium text-primary' : '' }}"
+                role="menuitem"
+            >
+                @lang('app.nav-help')
             </a>
 
             <a

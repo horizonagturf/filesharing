@@ -12,5 +12,14 @@
             <span class="block text-xs text-gray-500">@lang('sharing.require-otp-help')</span>
         </span>
     </label>
+    <x-ui.alert variant="info" class="mt-3" x-show="bundle.require_otp" x-cloak>
+        @lang('sharing.require-otp-enabled-info')
+    </x-ui.alert>
+    <x-ui.alert variant="warning" class="mt-3" x-show="! bundle.require_otp" x-cloak>
+        @lang('sharing.require-otp-disabled-warning')
+    </x-ui.alert>
+    <p class="mt-2">
+        <x-help-link topic="sharing-and-recipients" />
+    </p>
 </div>
 @endif

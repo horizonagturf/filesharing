@@ -8,6 +8,10 @@
         :subtitle="__('invitation.invitation-intro')"
     />
 
+    <p class="mb-6 text-sm text-gray-500">
+        <x-help-link topic="for-recipients" />
+    </p>
+
     <x-ui.card class="mb-6">
         <p class="text-xs font-medium uppercase tracking-wide text-primary">@lang('invitation.invitation-bundle')</p>
         <p class="mt-1 font-medium text-gray-900">{{ $bundle->title ?? __('invitation.untitled-bundle') }}</p>

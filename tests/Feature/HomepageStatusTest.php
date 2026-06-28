@@ -29,11 +29,16 @@ class HomepageStatusTest extends TestCase
             'downloads' => 0,
         ]);
 
-        $this->actingAsUser($user)
+        $response = $this->actingAsUser($user)
             ->get(route('homepage'))
             ->assertOk()
             ->assertSee('pending_approval', false)
             ->assertSee(__('approval.status-pending_approval'), false);
+
+        $this->assertMatchesRegularExpression(
+            '/window\.__bundles = JSON\.parse\(\'\[\{/',
+            $response->getContent(),
+        );
     }
 
     public function test_homepage_includes_denied_status_label(): void

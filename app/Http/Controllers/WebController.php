@@ -27,7 +27,7 @@ class WebController extends Controller
         if (Auth::check()) {
             $userBundles = Auth::user()->bundles;
             if ($userBundles->isNotEmpty()) {
-                $bundles = BundleResource::collection($userBundles);
+                $bundles = BundleResource::collection($userBundles)->resolve();
             }
         }
 

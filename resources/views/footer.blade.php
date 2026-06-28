@@ -10,6 +10,7 @@
             @if ($footerText)
                 <span>{{ $footerText }}</span>
             @endif
+            <a href="{{ route('help.index') }}" class="text-primary hover:underline">@lang('app.nav-help')</a>
             @if ($tosUrl)
                 <a href="{{ $tosUrl }}" class="text-primary hover:underline" target="_blank" rel="noopener">Terms</a>
             @endif

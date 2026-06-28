@@ -26,9 +26,9 @@ export function registerAlpineComponents() {
                 localStorage.setItem('owner_token', this.ownerToken);
             }
 
-            this.bundles = typeof window.__bundles !== 'undefined' ? window.__bundles : [];
+            this.bundles = this.bundlesFromWindow();
 
-            if (this.bundles != null && this.bundles.length > 0) {
+            if (this.bundles.length > 0) {
                 this.bundles.forEach((bundle) => {
                     bundle.label = ! bundle.title ? 'untitled' : bundle.title;
 
@@ -110,8 +110,18 @@ export function registerAlpineComponents() {
             ].filter((group) => group.items.length > 0);
         },
 
+        bundlesFromWindow() {
+            const raw = typeof window.__bundles !== 'undefined' ? window.__bundles : [];
+
+            if (Array.isArray(raw)) {
+                return raw;
+            }
+
+            return Array.isArray(raw?.data) ? raw.data : [];
+        },
+
         hasBundles() {
-            return this.bundles != null && this.bundles.length > 0;
+            return this.bundles.length > 0;
         },
     }));
 }

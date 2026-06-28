@@ -107,5 +107,6 @@ return [
     'account-view-bundles' => 'View my bundles',
     'nav-back-to-app' => 'Back to app',
     'nav-app-home' => 'Home',
+    'nav-help' => 'Help',
     'open' => 'Open',
 ];

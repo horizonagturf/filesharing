@@ -4,10 +4,16 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
 use App\Http\Controllers\BundleController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\WebController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/help', [HelpController::class, 'index'])->name('help.index');
+Route::get('/help/{topic}', [HelpController::class, 'show'])
+    ->name('help.show')
+    ->where('topic', '[a-z0-9\-]+');
 
 Route::get('/login', [WebController::class, 'login'])->name('login');
 Route::post('/login', [WebController::class, 'doLogin'])->name('login.post');

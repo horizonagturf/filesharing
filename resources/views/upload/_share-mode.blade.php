@@ -34,5 +34,8 @@
     <x-ui.alert variant="warning" class="mt-3" x-show="bundle.share_mode === 'static_link'" x-cloak>
         @lang('sharing.static-link-warning')
     </x-ui.alert>
+    <p class="mt-2">
+        <x-help-link topic="sharing-and-recipients" />
+    </p>
 </div>
 @endif
