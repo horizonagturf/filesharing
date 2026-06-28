@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Enums\ShareMode;
-use App\Helpers\Upload;
 use App\Services\SharingSettings;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -65,7 +64,7 @@ class ManageSharing extends Page implements HasForms
                             ->label('Blocked extensions')
                             ->placeholder('exe')
                             ->helperText(
-                                'Environment default: '.implode(', ', Upload::parseExtensionList((string) config('sharing.upload_blocked_extensions', '')))
+                                'Environment default: '.implode(', ', app(SharingSettings::class)->envBlockedExtensions())
                             )
                             ->visible(fn (Forms\Get $get): bool => (bool) $get('override_blocked_extensions')),
                     ]),

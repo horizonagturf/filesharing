@@ -43,7 +43,7 @@ return [
 
     'upload_blocked_extensions' => env(
         'UPLOAD_BLOCKED_EXTENSIONS',
-        'exe,bat,cmd,com,scr,pif,msi,dll,ps1,ps2,psc1,psc2,vbs,vbe,jse,wsf,wsh,reg,inf,cpl'
+        \App\Services\SharingSettings::DEFAULT_BLOCKED_EXTENSIONS,
     ),
 
     'settings_defaults' => [

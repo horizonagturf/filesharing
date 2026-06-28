@@ -13,6 +13,8 @@ class SharingSettings
 
     public const KEY_BLOCKED_EXTENSIONS = 'sharing.upload_blocked_extensions';
 
+    public const DEFAULT_BLOCKED_EXTENSIONS = 'exe,bat,cmd,com,scr,pif,msi,dll,ps1,ps2,psc1,psc2,vbs,vbe,jse,wsf,wsh,reg,inf,cpl';
+
     private const CACHE_KEY = 'sharing.settings';
 
     public function defaultShareMode(): ShareMode
@@ -40,6 +42,22 @@ class SharingSettings
     }
 
     /**
+     * Blocklist from environment/config (not the admin DB override).
+     *
+     * @return list<string>
+     */
+    public function envBlockedExtensions(): array
+    {
+        $value = config('sharing.upload_blocked_extensions');
+
+        if ($value === null) {
+            $value = self::DEFAULT_BLOCKED_EXTENSIONS;
+        }
+
+        return Upload::parseExtensionList((string) $value);
+    }
+
+    /**
      * @return list<string>
      */
     public function blockedExtensions(): array
@@ -52,7 +70,7 @@ class SharingSettings
             return Upload::parseExtensionList($stored ?? '');
         }
 
-        return Upload::parseExtensionList((string) config('sharing.upload_blocked_extensions', ''));
+        return $this->envBlockedExtensions();
     }
 
     public function hasBlockedExtensionsOverride(): bool
