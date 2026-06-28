@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\BundleResource\Pages;
 
 use App\Filament\Resources\BundleResource;
+use App\Models\BundleRecipient;
 use App\Services\BundleAdminService;
+use App\Services\BundleInvitationService;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -16,6 +18,28 @@ class ViewBundle extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('resendInvitation')
+                ->label('Resend invitation')
+                ->icon('heroicon-o-envelope')
+                ->visible(fn () => $this->record->recipients()->exists() && $this->record->isShareable())
+                ->form([
+                    Forms\Components\Select::make('recipient_id')
+                        ->label('Recipient')
+                        ->options(fn () => $this->record->recipients()->pluck('email', 'id'))
+                        ->required(),
+                ])
+                ->action(function (array $data, BundleInvitationService $service) {
+                    $recipient = BundleRecipient::query()
+                        ->where('bundle_id', $this->record->id)
+                        ->findOrFail($data['recipient_id']);
+
+                    $service->resendInvitation($recipient);
+
+                    Notification::make()
+                        ->title('Invitation resent')
+                        ->success()
+                        ->send();
+                }),
             Actions\Action::make('revoke')
                 ->label('Revoke')
                 ->icon('heroicon-o-no-symbol')

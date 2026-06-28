@@ -7,6 +7,7 @@
 
 	let baseUrl		= @js($baseUrl);
 	let bundle		= @js($bundle);
+	let invitationMode = @js($invitationMode);
 	let maxFiles	= @js(config('sharing.max_files'));
 	let maxFileSize = @js(Upload::fileMaxSize());
 
@@ -48,6 +49,16 @@
 			init: function() {
 				this.bundle = bundle
 
+				if (invitationMode && ! this.bundle.recipients) {
+					this.bundle.recipients = []
+				}
+
+				if (invitationMode && this.bundle.recipients && this.bundle.recipients.length > 0) {
+					this.bundle.recipients_text = this.bundle.recipients.map(r => r.email).join('\n')
+				} else if (invitationMode) {
+					this.bundle.recipients_text = ''
+				}
+
 				if (this.getBundle()) {
 					// Steps router
 					if (this.bundle.status === 'pending_approval' || this.bundle.status === 'approved' || this.bundle.status === 'sent' || (this.bundle.completed == true && this.bundle.status !== 'denied')) {
@@ -86,6 +97,15 @@
 				document.getElementById('upload-password').setCustomValidity('')
 				document.getElementById('upload-max-downloads').setCustomValidity('')
 
+				if (invitationMode) {
+					document.getElementById('upload-recipients').setCustomValidity('')
+					const emails = this.parseRecipients(this.bundle.recipients_text || '')
+					if (emails.length === 0) {
+						document.getElementById('upload-recipients').setCustomValidity('Field is required')
+						errors = true
+					}
+				}
+
 				if (this.bundle.title == null || this.bundle.title == '') {
 					document.getElementById('upload-title').setCustomValidity('Field is required')
 					errors = true
@@ -114,6 +134,7 @@
 						description: this.easymde.value(),
 						max_downloads: this.bundle.max_downloads,
 						password: this.bundle.password,
+						recipients: invitationMode ? this.parseRecipients(this.bundle.recipients_text || '') : [],
 						auth: this.bundle.owner_token
 					}
 				})
@@ -384,18 +405,6 @@
 				}
 			},
 
-			countFilesOnServer: function() {
-				count = 0
-
-				if (this.bundle.hasOwnProperty('files') && Object.keys(this.bundle.files).length > 0) {
-					for (i in this.bundle.files) {
-						if (this.bundle.files[i].status == true) {
-							count ++
-						}
-					}
-				}
-				return count
-			},
 			parseExpiresAt: function(expiresAt) {
 				if (expiresAt == null || expiresAt === '') {
 					return null
@@ -412,7 +421,40 @@
 				}
 
 				return expiresAt.isBefore(dayjs())
-			}
+			},
+
+			parseRecipients: function(text) {
+				return text
+					.split(/[\s,;]+/)
+					.map(email => email.trim().toLowerCase())
+					.filter(email => email.length > 0)
+			},
+
+			resendInvitation: function(recipient) {
+				axios({
+					url: BASE_URL+'/upload/'+this.bundle.slug+'/recipients/'+recipient.id+'/resend',
+					method: 'POST',
+					data: {
+						auth: this.bundle.owner_token
+					}
+				})
+				.then(() => {
+					this.showModal('{{ __('invitation.invitation-resent') }}', () => {})
+				})
+			},
+
+			countFilesOnServer: function() {
+				count = 0
+
+				if (this.bundle.hasOwnProperty('files') && Object.keys(this.bundle.files).length > 0) {
+					for (i in this.bundle.files) {
+						if (this.bundle.files[i].status == true) {
+							count ++
+						}
+					}
+				}
+				return count
+			},
 		}))
 	})
 </script>
@@ -553,6 +595,23 @@
 						</div>
 					</div>
 
+					@if ($invitationMode)
+					<div class="mt-5">
+						<p class="font-title uppercase">
+							@lang('invitation.recipients')
+							<span class="text-base">*</span>
+						</p>
+						<p class="text-xs text-slate-500 mb-1">@lang('invitation.recipients-help')</p>
+						<textarea
+							x-model="bundle.recipients_text"
+							class="w-full p-2 bg-transparent text-slate-700 min-h-20 py-1 rounded border border-purple-300 outline-none invalid:border-red-500 invalid:bg-red-50"
+							name="recipients"
+							id="upload-recipients"
+							placeholder="colleague@company.com&#10;partner@example.org"
+						></textarea>
+					</div>
+					@endif
+
 					{{-- Buttons --}}
 					<div class="grid grid-cols-2 gap-10 mt-10 text-center">
 						<div>&nbsp;</div>
@@ -687,10 +746,41 @@
 									@lang('approval.status-pending_approval')
 								</h2>
 								<p class="text-slate-600">@lang('approval.pending-message')</p>
+								<template x-if="invitationMode && bundle.recipients && bundle.recipients.length">
+									<p class="text-sm text-slate-500 mt-2">@lang('invitation.recipients-pending')</p>
+								</template>
 							</div>
 						</template>
 
-						<template x-if="bundle.preview_link">
+						<template x-if="invitationMode && (bundle.status === 'sent' || bundle.status === 'approved') && bundle.recipients && bundle.recipients.length">
+							<div>
+								<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
+									@lang('invitation.recipients-sent')
+								</h2>
+								<ul class="text-sm divide-y border border-primary-superlight rounded">
+									<template x-for="recipient in bundle.recipients" :key="recipient.id">
+										<li class="flex items-center justify-between p-3">
+											<div>
+												<p x-text="recipient.email" class="font-medium"></p>
+												<p class="text-xs text-slate-500">
+													<span x-show="recipient.verified_at">@lang('invitation.recipient-verified')</span>
+													<span x-show="! recipient.verified_at && recipient.invited_at">@lang('invitation.recipient-invited')</span>
+													<span x-show="! recipient.invited_at">@lang('invitation.recipient-pending')</span>
+												</p>
+											</div>
+											<button
+												type="button"
+												class="text-xs text-primary underline"
+												x-on:click="resendInvitation(recipient)"
+												x-show="recipient.invited_at"
+											>@lang('invitation.resend-invitation')</button>
+										</li>
+									</template>
+								</ul>
+							</div>
+						</template>
+
+						<template x-if="! invitationMode && bundle.preview_link">
 							<div>
 						<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
 							@lang('app.download-links')

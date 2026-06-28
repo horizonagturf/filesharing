@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
 use App\Http\Controllers\BundleController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\WebController;
 use Illuminate\Support\Facades\Route;
@@ -32,8 +33,15 @@ Route::middleware(['can.upload'])->group(function () {
             Route::delete('/file', [UploadController::class, 'deleteFile'])->name('file.delete');
             Route::post('/complete', [UploadController::class, 'completeBundle'])->name('complete');
             Route::delete('/delete', [UploadController::class, 'deleteBundle'])->name('bundle.delete');
+            Route::post('/recipients/{recipient}/resend', [UploadController::class, 'resendInvitation'])->name('recipients.resend');
         });
     });
+});
+
+Route::middleware(['signed'])->prefix('/invitation/{bundle}/{recipient}')->name('invitation.')->group(function () {
+    Route::get('/', [InvitationController::class, 'show'])->name('show');
+    Route::post('/otp', [InvitationController::class, 'requestOtp'])->name('otp.request');
+    Route::post('/verify', [InvitationController::class, 'verifyOtp'])->name('otp.verify');
 });
 
 Route::middleware(['auth', 'role:reviewer'])->prefix('/approval')->name('approval.')->group(function () {

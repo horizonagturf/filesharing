@@ -28,7 +28,7 @@ class BundleResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['user', 'files']);
+        return parent::getEloquentQuery()->with(['user', 'files', 'recipients']);
     }
 
     public static function infolist(Infolist $infolist): Infolist
@@ -60,6 +60,21 @@ class BundleResource extends Resource
                             ->placeholder('Never'),
                     ])
                     ->columns(2),
+                Infolists\Components\Section::make('Recipients')
+                    ->schema([
+                        Infolists\Components\RepeatableEntry::make('recipients')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('email'),
+                                Infolists\Components\TextEntry::make('invited_at')
+                                    ->dateTime()
+                                    ->placeholder('—'),
+                                Infolists\Components\TextEntry::make('verified_at')
+                                    ->dateTime()
+                                    ->placeholder('—'),
+                            ])
+                            ->columns(3),
+                    ])
+                    ->visible(fn (Bundle $record) => $record->recipients()->exists()),
                 Infolists\Components\Section::make('Files')
                     ->schema([
                         Infolists\Components\RepeatableEntry::make('files')

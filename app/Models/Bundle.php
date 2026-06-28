@@ -70,6 +70,11 @@ class Bundle extends Model
             ->latestOfMany();
     }
 
+    public function recipients(): HasMany
+    {
+        return $this->hasMany(BundleRecipient::class);
+    }
+
     public function isEditable(): bool
     {
         if ($this->completed) {

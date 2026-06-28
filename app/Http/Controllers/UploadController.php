@@ -6,8 +6,10 @@ use App\Helpers\Upload;
 use App\Http\Resources\BundleResource;
 use App\Http\Resources\FileResource;
 use App\Models\Bundle;
+use App\Models\BundleRecipient;
 use App\Models\File;
 use App\Services\BundleApprovalService;
+use App\Services\BundleInvitationService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,13 +20,17 @@ class UploadController extends Controller
 {
     public function __construct(
         private readonly BundleApprovalService $approvalService,
+        private readonly BundleInvitationService $invitationService,
     ) {}
 
     public function createBundle(Request $request, Bundle $bundle)
     {
+        $bundle->load('recipients');
+
         return view('upload', [
             'bundle' => new BundleResource($bundle),
             'baseUrl' => config('app.url'),
+            'invitationMode' => $this->invitationService->usesInvitationMode($bundle),
         ]);
     }
 
@@ -32,6 +38,11 @@ class UploadController extends Controller
     public function storeBundle(Request $request, Bundle $bundle)
     {
         $this->approvalService->assertEditable($bundle);
+
+        $request->validate([
+            'recipients' => 'nullable|array',
+            'recipients.*' => 'email',
+        ]);
 
         try {
             $bundle->update([
@@ -42,7 +53,11 @@ class UploadController extends Controller
                 'max_downloads' => $request->max_downloads ?? 0,
             ]);
 
-            return response()->json(new BundleResource($bundle));
+            if ($request->has('recipients') && $this->invitationService->usesInvitationMode($bundle)) {
+                $this->invitationService->syncRecipients($bundle, $request->input('recipients', []));
+            }
+
+            return response()->json(new BundleResource($bundle->fresh(['recipients'])));
         } catch (Exception $e) {
             report($e);
 
@@ -202,6 +217,19 @@ class UploadController extends Controller
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function resendInvitation(Request $request, Bundle $bundle, BundleRecipient $recipient)
+    {
+        abort_unless($recipient->bundle_id === $bundle->id, 404);
+
+        try {
+            $this->invitationService->resendInvitation($recipient);
+
+            return response()->json(['message' => __('invitation.invitation-resent')]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 }

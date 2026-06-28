@@ -38,4 +38,6 @@ return [
      ** TODO: find the best value to avoid too long time processing
      */
     'hash_maxfilesize' => env('HASH_MAX_FILESIZE', '1G'),
+
+    'default_share_mode' => env('DEFAULT_SHARE_MODE', 'invitation'),
 ];

@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Helpers\Upload;
 use App\Services\ApprovalPolicy;
+use App\Services\BundleInvitationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,20 @@ class BundleResource extends JsonResource
             $full = true;
         }
 
+        $invitationMode = app(BundleInvitationService::class)->usesInvitationMode($this->resource);
+        $previewLink = $this->preview_link;
+        $downloadLink = $this->download_link;
+
+        if ($invitationMode) {
+            if ($full) {
+                $previewLink = null;
+                $downloadLink = null;
+            } elseif ($this->isShareable()) {
+                $previewLink = route('bundle.preview', ['bundle' => $this->resource]);
+                $downloadLink = route('bundle.zip.download', ['bundle' => $this->resource]);
+            }
+        }
+
         $response = [
             'created_at' => $this->created_at,
             'completed' => (bool) $this->completed,
@@ -41,8 +56,15 @@ class BundleResource extends JsonResource
             'max_downloads' => (int) $this->max_downloads,
             'downloads' => (int) $this->downloads,
             'files' => FileResource::collection($this->files),
-            'preview_link' => $this->preview_link,
-            'download_link' => $this->download_link,
+            'preview_link' => $previewLink,
+            'download_link' => $downloadLink,
+            'invitation_mode' => $invitationMode,
+            'recipients' => $this->when($full === true, fn () => $this->recipients->map(fn ($recipient) => [
+                'id' => $recipient->id,
+                'email' => $recipient->email,
+                'invited_at' => $recipient->invited_at,
+                'verified_at' => $recipient->verified_at,
+            ])),
             'password' => $this->when($full === true, $this->password),
             'owner_token' => $this->when($full === true, $this->owner_token),
             'preview_token' => $this->when($full === true, $this->preview_token),

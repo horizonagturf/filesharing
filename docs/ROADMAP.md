@@ -383,55 +383,55 @@ Upload (draft)
 
 ### Tickets
 
-- [ ] **P5-1** `approval_requests` table
+- [x] **P5-1** `approval_requests` table
   - `bundle_id`, `requested_by`, `status`, `reviewer_id`, `notes`, timestamps
   - One active request per bundle
   - **Done when:** Migration applied
 
-- [ ] **P5-2** Submit for approval
+- [x] **P5-2** Submit for approval
   - Uploader action on completed bundle
   - Only when `ApprovalPolicy::requiresApproval()` is true
   - Status → `pending_approval`
   - **Done when:** Cannot skip for approval-required users
 
-- [ ] **P5-3** Direct send path
+- [x] **P5-3** Direct send path
   - When approval not required: status → `approved` without queue
   - **Done when:** Non-approval users send immediately
 
-- [ ] **P5-4** Reviewer queue UI
+- [x] **P5-4** Reviewer queue UI
   - Pending requests list; read-only bundle preview
   - Accessible to `reviewer` and `admin`
   - **Done when:** Reviewer sees pending items
 
-- [ ] **P5-5** Approve action
+- [x] **P5-5** Approve action
   - Status → `approved`; record `reviewer_id`, `approved_at`
   - Email uploader (can stub until mail stable)
   - **Done when:** Uploader homepage shows approved
 
-- [ ] **P5-6** Deny action
+- [x] **P5-6** Deny action
   - Requires reason; status → `denied`
   - Email uploader with reason
   - **Done when:** Denied bundle not shareable; uploader can edit/resubmit
 
-- [ ] **P5-7** Gate link generation
+- [x] **P5-7** Gate link generation
   - Preview/download links only when `approved` (or static mode in Phase 8)
   - Refactor `completeBundle()` — no auto-publish for approval users
   - **Done when:** Pending bundles have no public links
 
-- [ ] **P5-8** Reviewer notification email
+- [x] **P5-8** Reviewer notification email
   - Email all users with the `reviewer` role on new pending request (includes users who are also admin)
   - **Done when:** Email received on submit
 
-- [ ] **P5-9** Uploader homepage status
+- [x] **P5-9** Uploader homepage status
   - Badges: draft, pending, approved, denied, sent, revoked
   - **Done when:** Status matches DB
 
 ### Phase 5 exit criteria
 
-- [ ] Approval-required user blocked until reviewer approves
-- [ ] Non-approval user sends without queue
-- [ ] Per-user override beats group setting (verified manually)
-- [ ] Deny requires reason
+- [x] Approval-required user blocked until reviewer approves
+- [x] Non-approval user sends without queue
+- [x] Per-user override beats group setting (verified manually)
+- [x] Deny requires reason
 
 ---
 
@@ -452,47 +452,47 @@ Invitation email (signed link, not raw preview_token)
 
 ### Tickets
 
-- [ ] **P6-1** `bundle_recipients` table
+- [x] **P6-1** `bundle_recipients` table
   - `bundle_id`, `email`, `verified_at`, `otp_hash`, `otp_expires_at`, `invited_at`
   - Unique `(bundle_id, email)`
   - **Done when:** Migration applied
 
-- [ ] **P6-2** Add recipients UI
+- [x] **P6-2** Add recipients UI
   - Uploader adds emails (internal + external) on bundle
   - **Done when:** Recipients saved; validated email format
 
-- [ ] **P6-3** Invitation email
+- [x] **P6-3** Invitation email
   - Branded template; signed URL
   - Send when bundle is `approved` (or direct-send path complete)
   - **Done when:** Recipient receives invitation
 
-- [ ] **P6-4** OTP request endpoint
+- [x] **P6-4** OTP request endpoint
   - Generate 6-digit code; hash in DB; env expiry
   - Rate limit per email/hour
   - **Done when:** OTP email sent; brute force limited
 
-- [ ] **P6-5** OTP verify endpoint
+- [x] **P6-5** OTP verify endpoint
   - Correct code → mark `verified_at`; session for bundle
   - Max attempts from env
   - **Done when:** Verified session grants access
 
-- [ ] **P6-6** Gate preview/download on OTP
+- [x] **P6-6** Gate preview/download on OTP
   - Middleware: invitation mode requires verified recipient session
   - Same flow for internal and external emails
   - **Done when:** Unverified recipient blocked
 
-- [ ] **P6-7** Resend invitation / OTP
+- [x] **P6-7** Resend invitation / OTP
   - Uploader or admin can resend; rate limited
   - **Done when:** Resend works without duplicate rows
 
-- [ ] **P6-8** Feature tests
+- [x] **P6-8** Feature tests
   - invite → OTP → preview → download (internal + external email)
   - **Done when:** Tests in CI
 
 ### Phase 6 exit criteria
 
-- [ ] Internal and external recipients complete OTP before access
-- [ ] Static raw token not sent in invitation email
+- [x] Internal and external recipients complete OTP before access
+- [x] Static raw token not sent in invitation email
 
 ---
 
@@ -657,8 +657,8 @@ Update as you go. GitHub issues: [Enterprise Roadmap milestone](https://github.c
 | P2 — Roles & policy | [#11](https://github.com/horizonagturf/filesharing/issues/11) | `[x]` | 2026-06-27 | 2026-06-27 | Roles, groups, ApprovalPolicy, Laravel Auth |
 | P3 — Microsoft SSO | [#13](https://github.com/horizonagturf/filesharing/issues/13) | `[x]` | 2026-06-27 | 2026-06-27 | Socialite Azure; JIT provisioning; tenant/domain lock |
 | P4 — Admin & branding | [#12](https://github.com/horizonagturf/filesharing/issues/12) | `[x]` | 2026-06-27 | 2026-06-27 | Filament `/admin`; users, groups, bundles, branding, reviewers |
-| P5 — Approval workflow | [#14](https://github.com/horizonagturf/filesharing/issues/14) | `[ ]` | | | |
-| P6 — Invitations & OTP | [#16](https://github.com/horizonagturf/filesharing/issues/16) | `[ ]` | | | |
+| P5 — Approval workflow | [#14](https://github.com/horizonagturf/filesharing/issues/14) | `[x]` | 2026-06-27 | 2026-06-27 | Submit/approve/deny queue; link gating; reviewer notifications |
+| P6 — Invitations & OTP | [#16](https://github.com/horizonagturf/filesharing/issues/16) | `[x]` | 2026-06-27 | 2026-06-27 | Recipients, signed invitations, OTP verify, access gating |
 | P7 — Audit logging | [#15](https://github.com/horizonagturf/filesharing/issues/15) | `[ ]` | | | |
 | P8 — Hardening | [#17](https://github.com/horizonagturf/filesharing/issues/17) | `[ ]` | | | |
 

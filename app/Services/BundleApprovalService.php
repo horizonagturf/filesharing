@@ -18,6 +18,7 @@ class BundleApprovalService
 {
     public function __construct(
         private readonly ApprovalPolicy $approvalPolicy,
+        private readonly BundleInvitationService $invitationService,
     ) {}
 
     public function complete(Bundle $bundle, ?User $user): Bundle
@@ -28,6 +29,10 @@ class BundleApprovalService
 
         if ($bundle->files()->where('status', true)->doesntExist()) {
             throw new InvalidArgumentException(__('approval.bundle-has-no-files'));
+        }
+
+        if ($this->invitationService->usesInvitationMode($bundle) && $bundle->recipients()->doesntExist()) {
+            throw new InvalidArgumentException(__('invitation.recipients-required'));
         }
 
         return DB::transaction(function () use ($bundle, $user) {
@@ -49,12 +54,12 @@ class BundleApprovalService
 
                 $this->notifyReviewers($request);
 
-                return $bundle->fresh();
+                return $bundle->fresh(['recipients']);
             }
 
             $this->approveDirectly($bundle);
 
-            return $bundle->fresh();
+            return $bundle->fresh(['recipients']);
         });
     }
 
@@ -73,8 +78,7 @@ class BundleApprovalService
 
             $bundle = $request->bundle;
             $this->setExpiresAt($bundle);
-            $this->generateLinks($bundle);
-            $bundle->status = BundleStatus::Approved;
+            $this->publishBundle($bundle);
             $bundle->completed = true;
             $bundle->save();
 
@@ -82,7 +86,7 @@ class BundleApprovalService
                 Mail::to($bundle->user->email)->send(new BundleApprovedMail($bundle));
             }
 
-            return $bundle->fresh();
+            return $bundle->fresh(['recipients']);
         });
     }
 
@@ -116,7 +120,7 @@ class BundleApprovalService
                 Mail::to($bundle->user->email)->send(new BundleDeniedMail($bundle, $reason));
             }
 
-            return $bundle->fresh();
+            return $bundle->fresh(['recipients']);
         });
     }
 
@@ -130,8 +134,7 @@ class BundleApprovalService
     private function approveDirectly(Bundle $bundle): void
     {
         $this->setExpiresAt($bundle);
-        $this->generateLinks($bundle);
-        $bundle->status = BundleStatus::Approved;
+        $this->publishBundle($bundle);
         $bundle->completed = true;
         $bundle->save();
     }
@@ -155,6 +158,27 @@ class BundleApprovalService
     {
         $bundle->preview_link = route('bundle.preview', ['bundle' => $bundle, 'auth' => $bundle->preview_token]);
         $bundle->download_link = route('bundle.zip.download', ['bundle' => $bundle, 'auth' => $bundle->preview_token]);
+    }
+
+    private function publishBundle(Bundle $bundle): void
+    {
+        if ($this->invitationService->usesInvitationMode($bundle)) {
+            if ($bundle->recipients()->doesntExist()) {
+                throw new InvalidArgumentException(__('invitation.recipients-required'));
+            }
+
+            $bundle->status = BundleStatus::Approved;
+            $bundle->preview_link = null;
+            $bundle->download_link = null;
+            $bundle->save();
+
+            $this->invitationService->sendInvitations($bundle);
+
+            return;
+        }
+
+        $this->generateLinks($bundle);
+        $bundle->status = BundleStatus::Approved;
     }
 
     private function notifyReviewers(ApprovalRequest $request): void

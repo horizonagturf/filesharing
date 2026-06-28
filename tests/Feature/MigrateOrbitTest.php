@@ -94,11 +94,11 @@ class MigrateOrbitTest extends TestCase
 
     public function test_force_import_preserves_existing_sql_role(): void
     {
-        User::create([
+        $user = User::create([
             'username' => 'charlie',
             'password' => 'existing-hash',
-            'role' => UserRole::Reviewer,
         ]);
+        $user->assignRole(UserRole::Reviewer);
 
         Filesystem::put($this->orbitPath.'/users/charlie.json', json_encode([
             'username' => 'charlie',
@@ -109,6 +109,6 @@ class MigrateOrbitTest extends TestCase
 
         $user = User::where('username', 'charlie')->first();
         $this->assertNotNull($user);
-        $this->assertSame(UserRole::Reviewer, $user->role);
+        $this->assertTrue($user->hasRole(UserRole::Reviewer));
     }
 }

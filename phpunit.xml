@@ -29,5 +29,6 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="MICROSOFT_SSO_ENABLED" value="false"/>
         <env name="UPLOAD_LIMIT_IPS" value=""/>
+        <env name="DEFAULT_SHARE_MODE" value="static_link"/>
     </php>
 </phpunit>
