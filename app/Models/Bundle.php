@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ApprovalRequestStatus;
 use App\Enums\BundleStatus;
+use App\Enums\ShareMode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,6 +25,7 @@ class Bundle extends Model
         'downloads',
         'completed',
         'status',
+        'share_mode',
         'expiry',
         'expires_at',
         'preview_link',
@@ -36,6 +38,7 @@ class Bundle extends Model
         return [
             'completed' => 'boolean',
             'status' => BundleStatus::class,
+            'share_mode' => ShareMode::class,
             'expires_at' => 'datetime',
             'fullsize' => 'integer',
             'max_downloads' => 'integer',

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\BundleStatus;
+use App\Enums\ShareMode;
 use App\Models\Bundle;
 use Exception;
 use Illuminate\Log\Events\MessageLogged;
@@ -61,6 +62,7 @@ class ServerErrorLoggingTest extends TestCase
             'slug' => $this->slug,
             'owner_token' => substr(sha1('owner'), 0, 15),
             'preview_token' => substr(sha1('preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => true,
             'status' => BundleStatus::Approved,
             'expiry' => '86400',

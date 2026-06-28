@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\BundleStatus;
+use App\Enums\ShareMode;
 use App\Models\Bundle;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -37,6 +38,7 @@ class UploadWorkflowTest extends TestCase
             'slug' => $slug,
             'owner_token' => substr(sha1($slug.'owner'), 0, 15),
             'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => false,
             'status' => BundleStatus::Draft,
             'expiry' => '86400',
@@ -106,6 +108,7 @@ class UploadWorkflowTest extends TestCase
             'slug' => $slug,
             'owner_token' => substr(sha1($slug.'owner'), 0, 15),
             'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => false,
             'status' => BundleStatus::Draft,
             'expiry' => '86400',
@@ -164,6 +167,7 @@ class UploadWorkflowTest extends TestCase
             'slug' => $slug,
             'owner_token' => substr(sha1($slug.'owner'), 0, 15),
             'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => false,
             'status' => BundleStatus::Draft,
             'expiry' => '86400',
@@ -194,6 +198,7 @@ class UploadWorkflowTest extends TestCase
             'slug' => $slug,
             'owner_token' => substr(sha1($slug.'owner'), 0, 15),
             'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => false,
             'status' => BundleStatus::Draft,
             'expiry' => '86400',

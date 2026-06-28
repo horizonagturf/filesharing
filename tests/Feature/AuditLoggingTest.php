@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\ApprovalRequestStatus;
 use App\Enums\AuditEvent;
 use App\Enums\BundleStatus;
+use App\Enums\ShareMode;
 use App\Filament\Resources\AuditLogResource\Pages\ListAuditLogs;
 use App\Models\ApprovalRequest;
 use App\Models\AuditLog;
@@ -52,14 +53,11 @@ class AuditLoggingTest extends TestCase
     public function test_submit_for_approval_is_logged(): void
     {
         Mail::fake();
-        config([
-            'approval.required_default' => true,
-            'sharing.default_share_mode' => 'static_link',
-        ]);
+        config(['approval.required_default' => true]);
 
         $user = User::factory()->create(['requires_approval' => null]);
         User::factory()->reviewer()->create();
-        $bundle = $this->createBundle($user);
+        $bundle = $this->createBundle($user, shareMode: ShareMode::StaticLink);
 
         $this->actingAsUser($user)
             ->postJson("/upload/{$bundle->slug}/complete", [
@@ -77,11 +75,10 @@ class AuditLoggingTest extends TestCase
     public function test_reviewer_approve_is_logged(): void
     {
         Mail::fake();
-        config(['sharing.default_share_mode' => 'static_link']);
 
         $uploader = User::factory()->create(['requires_approval' => true]);
         $reviewer = User::factory()->reviewer()->create();
-        $bundle = $this->createBundle($uploader);
+        $bundle = $this->createBundle($uploader, shareMode: ShareMode::StaticLink);
 
         $this->actingAsUser($uploader)
             ->postJson("/upload/{$bundle->slug}/complete", [
@@ -176,7 +173,7 @@ class AuditLoggingTest extends TestCase
             'recipient_email' => 'recipient@example.com',
         ]);
 
-        $code = Mail::sent(\App\Mail\BundleOtpMail::class)->first()->code;
+        $code = Mail::queued(\App\Mail\BundleOtpMail::class)->first()->code;
 
         $signedVerify = URL::temporarySignedRoute('invitation.otp.verify', now()->addHour(), [
             'bundle' => $bundle,
@@ -208,6 +205,7 @@ class AuditLoggingTest extends TestCase
             'slug' => 'blocked-'.Str::random(6),
             'owner_token' => substr(sha1('owner'), 0, 15),
             'preview_token' => substr(sha1('preview'), 0, 15),
+            'share_mode' => ShareMode::Invitation,
             'completed' => true,
             'status' => BundleStatus::Sent,
             'expiry' => '86400',
@@ -473,12 +471,11 @@ class AuditLoggingTest extends TestCase
 
     public function test_expired_bundle_access_is_logged(): void
     {
-        config(['sharing.default_share_mode' => 'static_link']);
-
         $bundle = Bundle::create([
             'slug' => 'expired-'.Str::random(6),
             'owner_token' => substr(sha1('owner'), 0, 15),
             'preview_token' => substr(sha1('preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => true,
             'status' => BundleStatus::Approved,
             'expiry' => '86400',
@@ -502,12 +499,11 @@ class AuditLoggingTest extends TestCase
 
     public function test_invalid_static_token_access_is_logged(): void
     {
-        config(['sharing.default_share_mode' => 'static_link']);
-
         $bundle = Bundle::create([
             'slug' => 'static-'.Str::random(6),
             'owner_token' => substr(sha1('owner'), 0, 15),
             'preview_token' => substr(sha1('preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => true,
             'status' => BundleStatus::Approved,
             'expiry' => '86400',
@@ -531,12 +527,11 @@ class AuditLoggingTest extends TestCase
 
     public function test_max_downloads_exceeded_is_logged(): void
     {
-        config(['sharing.default_share_mode' => 'static_link']);
-
         $bundle = Bundle::create([
             'slug' => 'maxdl-'.Str::random(6),
             'owner_token' => substr(sha1('owner'), 0, 15),
             'preview_token' => substr(sha1('preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => true,
             'status' => BundleStatus::Approved,
             'expiry' => '86400',
@@ -560,12 +555,11 @@ class AuditLoggingTest extends TestCase
 
     public function test_zip_download_failure_is_not_logged(): void
     {
-        config(['sharing.default_share_mode' => 'static_link']);
-
         $bundle = Bundle::create([
             'slug' => 'zip-'.Str::random(6),
             'owner_token' => substr(sha1('owner'), 0, 15),
             'preview_token' => substr(sha1('preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => true,
             'status' => BundleStatus::Approved,
             'expiry' => '86400',
@@ -696,6 +690,7 @@ class AuditLoggingTest extends TestCase
         User $user,
         BundleStatus $status = BundleStatus::Draft,
         bool $completed = false,
+        ShareMode $shareMode = ShareMode::Invitation,
     ): Bundle {
         $slug = 'bundle-'.Str::lower(Str::random(8));
 
@@ -705,6 +700,7 @@ class AuditLoggingTest extends TestCase
             'title' => 'Test bundle',
             'owner_token' => substr(sha1($slug.'owner'), 0, 15),
             'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => $shareMode,
             'completed' => $completed,
             'status' => $status,
             'expiry' => '86400',

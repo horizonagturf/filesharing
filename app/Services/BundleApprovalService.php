@@ -90,7 +90,7 @@ class BundleApprovalService
             $bundle->save();
 
             if ($bundle->user?->email) {
-                Mail::to($bundle->user->email)->send(new BundleApprovedMail($bundle));
+                Mail::to($bundle->user->email)->queue(new BundleApprovedMail($bundle));
             }
 
             Audit::log(AuditEvent::BundleApproved, [
@@ -133,7 +133,7 @@ class BundleApprovalService
             $bundle->save();
 
             if ($bundle->user?->email) {
-                Mail::to($bundle->user->email)->send(new BundleDeniedMail($bundle, $reason));
+                Mail::to($bundle->user->email)->queue(new BundleDeniedMail($bundle, $reason));
             }
 
             Audit::log(AuditEvent::BundleDenied, [
@@ -217,7 +217,7 @@ class BundleApprovalService
     {
         ReviewerPool::all()
             ->filter(fn (User $reviewer) => filled($reviewer->email))
-            ->each(fn (User $reviewer) => Mail::to($reviewer->email)->send(
+            ->each(fn (User $reviewer) => Mail::to($reviewer->email)->queue(
                 new ApprovalRequestSubmittedMail($request)
             ));
     }

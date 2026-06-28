@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ApprovalRequestStatus;
 use App\Enums\BundleStatus;
+use App\Enums\ShareMode;
 use App\Mail\ApprovalRequestSubmittedMail;
 use App\Mail\BundleApprovedMail;
 use App\Mail\BundleDeniedMail;
@@ -44,7 +45,7 @@ class ApprovalWorkflowTest extends TestCase
             'status' => ApprovalRequestStatus::Pending->value,
         ]);
 
-        Mail::assertSent(ApprovalRequestSubmittedMail::class, fn ($mail) => $mail->hasTo($reviewer->email));
+        Mail::assertQueued(ApprovalRequestSubmittedMail::class, fn ($mail) => $mail->hasTo($reviewer->email));
     }
 
     public function test_pending_approval_bundle_has_no_expires_at(): void
@@ -160,7 +161,7 @@ class ApprovalWorkflowTest extends TestCase
         $this->assertSame(ApprovalRequestStatus::Approved, $request->status);
         $this->assertSame($reviewer->id, $request->reviewer_id);
 
-        Mail::assertSent(BundleApprovedMail::class, fn ($mail) => $mail->hasTo($uploader->email));
+        Mail::assertQueued(BundleApprovedMail::class, fn ($mail) => $mail->hasTo($uploader->email));
     }
 
     public function test_reviewer_deny_requires_reason(): void
@@ -194,7 +195,7 @@ class ApprovalWorkflowTest extends TestCase
         $this->assertNull($bundle->preview_link);
         $this->assertSame('Contains confidential data', $request->notes);
 
-        Mail::assertSent(BundleDeniedMail::class, fn ($mail) => $mail->hasTo($uploader->email));
+        Mail::assertQueued(BundleDeniedMail::class, fn ($mail) => $mail->hasTo($uploader->email));
     }
 
     public function test_denied_bundle_can_be_resubmitted(): void
@@ -305,9 +306,9 @@ class ApprovalWorkflowTest extends TestCase
             ], $this->uploadHeaders($bundle))
             ->assertOk();
 
-        Mail::assertSent(ApprovalRequestSubmittedMail::class, 2);
-        Mail::assertSent(ApprovalRequestSubmittedMail::class, fn ($mail) => $mail->hasTo($reviewerA->email));
-        Mail::assertSent(ApprovalRequestSubmittedMail::class, fn ($mail) => $mail->hasTo($reviewerB->email));
+        Mail::assertQueued(ApprovalRequestSubmittedMail::class, 2);
+        Mail::assertQueued(ApprovalRequestSubmittedMail::class, fn ($mail) => $mail->hasTo($reviewerA->email));
+        Mail::assertQueued(ApprovalRequestSubmittedMail::class, fn ($mail) => $mail->hasTo($reviewerB->email));
     }
 
     public function test_user_override_false_skips_approval_when_group_requires_it(): void
@@ -350,6 +351,7 @@ class ApprovalWorkflowTest extends TestCase
             'title' => 'Test bundle',
             'owner_token' => substr(sha1($slug.'owner'), 0, 15),
             'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => $completed,
             'status' => $status,
             'expiry' => '86400',

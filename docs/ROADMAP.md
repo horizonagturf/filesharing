@@ -563,42 +563,42 @@ Invitation email (signed link, not raw preview_token)
 
 ### Tickets
 
-- [ ] **P8-1** Share mode per bundle
+- [x] **P8-1** Share mode per bundle
   - `share_mode`: `invitation` (default) | `static_link`
   - **Done when:** Mode stored on bundle
 
-- [ ] **P8-2** Static link path (legacy)
+- [x] **P8-2** Static link path (legacy)
   - `/bundle/{slug}/preview?auth={preview_token}` when `share_mode=static_link` and bundle approved
   - UI warning: "Less secure — link alone grants access"
   - **Done when:** Legacy flow works for approved bundles
 
-- [ ] **P8-3** Org default share mode
+- [x] **P8-3** Org default share mode
   - `settings.default_share_mode`
   - **Done when:** New bundles inherit default
 
-- [ ] **P8-4** Restrict static links by group
+- [x] **P8-4** Restrict static links by group
   - Only groups with `allow_static_links=true` may use static mode
   - **Done when:** Unauthorized users cannot select static link
 
-- [ ] **P8-5** MySQL production guide
+- [x] **P8-5** MySQL production guide
   - Add to readme: charset utf8mb4, backups, connection config
   - Note SQLite valid for single-node/small deploys
   - **Done when:** Operator docs complete
 
-- [ ] **P8-6** Queue workers
+- [x] **P8-6** Queue workers
   - Mail, OTP, notifications on queue (`database` or `redis` driver)
   - Docker/cron documents `queue:work`
   - **Done when:** Emails sent async; no request timeout on send
 
-- [ ] **P8-7** Rate limiting
+- [x] **P8-7** Rate limiting
   - OAuth callback, OTP, download endpoints
   - **Done when:** Limits configurable via env
 
-- [ ] **P8-8** Security headers & session idle timeout
+- [x] **P8-8** Security headers & session idle timeout
   - Secure cookies, CSP basics, `SESSION_IDLE_TIMEOUT`
   - **Done when:** Documented defaults applied
 
-- [ ] **P8-9** End-to-end smoke test checklist
+- [x] **P8-9** End-to-end smoke test checklist
   - Manual QA script covering full flow (see below)
   - **Done when:** Signed off for production
 
@@ -620,7 +620,7 @@ Invitation email (signed link, not raw preview_token)
 ### Phase 8 exit criteria
 
 - [ ] Production deployed on MySQL
-- [ ] Default invitation mode; static link opt-in for trusted groups
+- [x] Default invitation mode; static link opt-in for trusted groups
 - [ ] E2E checklist signed off
 
 ---
@@ -660,7 +660,7 @@ Update as you go. GitHub issues: [Enterprise Roadmap milestone](https://github.c
 | P5 — Approval workflow | [#14](https://github.com/horizonagturf/filesharing/issues/14) | `[x]` | 2026-06-27 | 2026-06-27 | Submit/approve/deny queue; link gating; reviewer notifications |
 | P6 — Invitations & OTP | [#16](https://github.com/horizonagturf/filesharing/issues/16) | `[x]` | 2026-06-27 | 2026-06-27 | Recipients, signed invitations, OTP verify, access gating |
 | P7 — Audit logging | [#15](https://github.com/horizonagturf/filesharing/issues/15) | `[x]` | 2026-06-27 | 2026-06-27 | Audit service, instrumentation, purge/export, Filament viewer |
-| P8 — Hardening | [#17](https://github.com/horizonagturf/filesharing/issues/17) | `[ ]` | | | |
+| P8 — Hardening | [#17](https://github.com/horizonagturf/filesharing/issues/17) | `[x]` | 2026-06-27 | 2026-06-27 | Share modes, queue, rate limits, security headers, smoke test |
 
 ---
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\BundleStatus;
+use App\Enums\ShareMode;
 use App\Mail\BundleInvitationMail;
 use App\Mail\BundleOtpMail;
 use App\Models\Bundle;
@@ -41,7 +42,7 @@ class InvitationWorkflowTest extends TestCase
             ->assertJsonPath('preview_link', null)
             ->assertJsonCount(1, 'recipients');
 
-        Mail::assertSent(BundleInvitationMail::class, fn ($mail) => $mail->hasTo('external@example.com'));
+        Mail::assertQueued(BundleInvitationMail::class, fn ($mail) => $mail->hasTo('external@example.com'));
 
         $this->assertDatabaseHas('bundle_recipients', [
             'bundle_id' => $bundle->id,
@@ -63,7 +64,7 @@ class InvitationWorkflowTest extends TestCase
             ], $this->uploadHeaders($bundle))
             ->assertOk();
 
-        Mail::assertSent(BundleInvitationMail::class, function (BundleInvitationMail $mail) use ($bundle, $recipient) {
+        Mail::assertQueued(BundleInvitationMail::class, function (BundleInvitationMail $mail) use ($bundle, $recipient) {
             $this->assertStringNotContainsString($bundle->preview_token, $mail->invitationUrl);
             $this->assertStringContainsString('signature=', $mail->invitationUrl);
 
@@ -114,7 +115,7 @@ class InvitationWorkflowTest extends TestCase
 
         $bundle->refresh();
         $this->assertSame(BundleStatus::Sent, $bundle->status);
-        Mail::assertSent(BundleInvitationMail::class, fn ($mail) => $mail->hasTo('recipient@example.com'));
+        Mail::assertQueued(BundleInvitationMail::class, fn ($mail) => $mail->hasTo('recipient@example.com'));
     }
 
     public function test_unverified_recipient_cannot_preview_bundle(): void
@@ -149,7 +150,7 @@ class InvitationWorkflowTest extends TestCase
 
         $this->post($signedOtp)->assertRedirect();
 
-        Mail::assertSent(BundleOtpMail::class, fn ($mail) => $mail->hasTo('guest@example.com'));
+        Mail::assertQueued(BundleOtpMail::class, fn ($mail) => $mail->hasTo('guest@example.com'));
 
         $recipient->refresh();
         $code = $this->extractOtpFromMail();
@@ -182,8 +183,8 @@ class InvitationWorkflowTest extends TestCase
             ], $this->uploadHeaders($bundle))
             ->assertOk();
 
-        Mail::assertSent(BundleInvitationMail::class, fn ($mail) => $mail->hasTo($internal->email));
-        Mail::assertSent(BundleInvitationMail::class, fn ($mail) => $mail->hasTo($external->email));
+        Mail::assertQueued(BundleInvitationMail::class, fn ($mail) => $mail->hasTo($internal->email));
+        Mail::assertQueued(BundleInvitationMail::class, fn ($mail) => $mail->hasTo($external->email));
     }
 
     public function test_owner_can_resend_invitation_without_duplicate_rows(): void
@@ -201,7 +202,7 @@ class InvitationWorkflowTest extends TestCase
             ->assertOk();
 
         $this->assertSame(1, BundleRecipient::query()->where('bundle_id', $bundle->id)->count());
-        Mail::assertSent(BundleInvitationMail::class, 1);
+        Mail::assertQueued(BundleInvitationMail::class, 1);
     }
 
     public function test_store_bundle_syncs_recipient_emails(): void
@@ -222,6 +223,32 @@ class InvitationWorkflowTest extends TestCase
 
         $this->assertDatabaseHas('bundle_recipients', ['email' => 'one@example.com']);
         $this->assertDatabaseHas('bundle_recipients', ['email' => 'two@example.com']);
+    }
+
+    public function test_invitation_show_does_not_consume_otp_route_rate_limit(): void
+    {
+        Mail::fake();
+        config(['security.otp_route_rate_limit_per_hour' => 1]);
+
+        $user = User::factory()->create(['requires_approval' => false]);
+        $bundle = $this->createBundle($user, BundleStatus::Sent, completed: true);
+        $recipient = $this->addRecipient($bundle, 'guest@example.com', invited: true);
+
+        $signedShow = URL::temporarySignedRoute('invitation.show', now()->addHour(), [
+            'bundle' => $bundle,
+            'recipient' => $recipient,
+        ]);
+
+        $this->get($signedShow)->assertOk();
+        $this->get($signedShow)->assertOk();
+
+        $signedOtp = URL::temporarySignedRoute('invitation.otp.request', now()->addHour(), [
+            'bundle' => $bundle,
+            'recipient' => $recipient,
+        ]);
+
+        $this->post($signedOtp)->assertRedirect();
+        Mail::assertQueued(BundleOtpMail::class);
     }
 
     public function test_otp_verify_rejects_invalid_code(): void
@@ -262,6 +289,7 @@ class InvitationWorkflowTest extends TestCase
             'title' => 'Test bundle',
             'owner_token' => substr(sha1($slug.'owner'), 0, 15),
             'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::Invitation,
             'completed' => $completed,
             'status' => $status,
             'expiry' => '86400',
@@ -302,7 +330,7 @@ class InvitationWorkflowTest extends TestCase
 
     private function extractOtpFromMail(): string
     {
-        $sent = Mail::sent(BundleOtpMail::class)->first();
+        $sent = Mail::queued(BundleOtpMail::class)->first();
         $this->assertNotNull($sent);
 
         return $sent->code;

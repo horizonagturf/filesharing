@@ -54,6 +54,7 @@ RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
 	&& chmod +x /app/.docker/entrypoint.sh
 
 RUN echo "* * * * * www-data php /app/artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/filesharing \
+	&& echo "* * * * * www-data php /app/artisan queue:work --sleep=3 --tries=3 --stop-when-empty >> /dev/null 2>&1" >> /etc/cron.d/filesharing \
 	&& chmod 0644 /etc/cron.d/filesharing
 
 VOLUME /app/storage

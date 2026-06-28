@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\BundleStatus;
+use App\Enums\ShareMode;
 use App\Models\Bundle;
 use App\Models\File;
 use App\Models\User;
@@ -58,6 +59,7 @@ class LegacyCompletedBundleTest extends TestCase
             'title' => 'Legacy bundle',
             'owner_token' => substr(sha1($slug.'owner'), 0, 15),
             'preview_token' => $previewToken,
+            'share_mode' => ShareMode::StaticLink,
             'completed' => true,
             'status' => BundleStatus::Draft,
             'expiry' => '86400',

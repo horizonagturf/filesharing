@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Helpers\Upload;
 use App\Services\ApprovalPolicy;
 use App\Services\BundleInvitationService;
+use App\Services\ShareModePolicy;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
@@ -59,6 +60,8 @@ class BundleResource extends JsonResource
             'preview_link' => $previewLink,
             'download_link' => $downloadLink,
             'invitation_mode' => $invitationMode,
+            'share_mode' => $this->share_mode?->value,
+            'can_use_static_link' => $this->when($full === true && Auth::check(), fn () => app(ShareModePolicy::class)->canUseStaticLinks(Auth::user())),
             'recipients' => $this->when($full === true, fn () => $this->recipients->map(fn ($recipient) => [
                 'id' => $recipient->id,
                 'email' => $recipient->email,

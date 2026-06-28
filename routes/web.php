@@ -14,7 +14,9 @@ Route::post('/login', [WebController::class, 'doLogin'])->name('login.post');
 Route::get('/logout', [WebController::class, 'logout'])->name('logout');
 
 Route::get('/auth/microsoft', [MicrosoftAuthController::class, 'redirect'])->name('auth.microsoft');
-Route::get('/auth/microsoft/callback', [MicrosoftAuthController::class, 'callback'])->name('auth.microsoft.callback');
+Route::get('/auth/microsoft/callback', [MicrosoftAuthController::class, 'callback'])
+    ->middleware('throttle:oauth')
+    ->name('auth.microsoft.callback');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/account', [AccountController::class, 'show'])->name('account');
@@ -40,8 +42,8 @@ Route::middleware(['can.upload'])->group(function () {
 
 Route::middleware(['signed'])->prefix('/invitation/{bundle}/{recipient}')->name('invitation.')->group(function () {
     Route::get('/', [InvitationController::class, 'show'])->name('show');
-    Route::post('/otp', [InvitationController::class, 'requestOtp'])->name('otp.request');
-    Route::post('/verify', [InvitationController::class, 'verifyOtp'])->name('otp.verify');
+    Route::post('/otp', [InvitationController::class, 'requestOtp'])->middleware('throttle:otp')->name('otp.request');
+    Route::post('/verify', [InvitationController::class, 'verifyOtp'])->middleware('throttle:otp')->name('otp.verify');
 });
 
 Route::middleware(['auth', 'role:reviewer'])->prefix('/approval')->name('approval.')->group(function () {
@@ -51,7 +53,7 @@ Route::middleware(['auth', 'role:reviewer'])->prefix('/approval')->name('approva
     Route::post('/{approvalRequest}/deny', [ApprovalController::class, 'deny'])->name('deny');
 });
 
-Route::middleware(['access.guest'])->prefix('/bundle/{bundle}')->name('bundle.')->group(function () {
+Route::middleware(['access.guest', 'throttle:download'])->prefix('/bundle/{bundle}')->name('bundle.')->group(function () {
     Route::get('/preview', [BundleController::class, 'previewBundle'])->name('preview');
     Route::get('/download', [BundleController::class, 'downloadZip'])->name('zip.download');
 });

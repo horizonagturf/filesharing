@@ -5,12 +5,13 @@ namespace App\Mail;
 use App\Models\BundleRecipient;
 use App\Services\BundleInvitationService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class BundleInvitationMail extends Mailable
+class BundleInvitationMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

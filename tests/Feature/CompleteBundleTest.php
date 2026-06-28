@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ShareMode;
 use App\Models\Bundle;
 use App\Models\File;
 use Illuminate\Support\Str;
@@ -15,6 +16,7 @@ class CompleteBundleTest extends TestCase
             'slug' => 'completebundle',
             'owner_token' => substr(sha1('complete-owner'), 0, 15),
             'preview_token' => substr(sha1('complete-preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
             'completed' => false,
             'expiry' => '86400',
             'fullsize' => 0,

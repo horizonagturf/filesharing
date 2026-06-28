@@ -7,12 +7,17 @@ use App\Enums\BundleStatus;
 use App\Http\Resources\BundleResource;
 use App\Models\Bundle;
 use App\Services\Audit;
+use App\Services\ShareModePolicy;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class WebController extends Controller
 {
+    public function __construct(
+        private readonly ShareModePolicy $shareModePolicy,
+    ) {}
+
     public function homepage()
     {
         $bundles = [];
@@ -72,6 +77,7 @@ class WebController extends Controller
             $bundle = new Bundle([
                 'user_id' => $user?->id,
                 'status' => BundleStatus::Draft,
+                'share_mode' => $this->shareModePolicy->defaultShareMode(),
                 'completed' => false,
                 'expiry' => config('sharing.default-expiry', 86400),
                 'expires_at' => null,

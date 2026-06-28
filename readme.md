@@ -322,8 +322,60 @@ Admins can manage the organization from `/admin` (Filament). Sign in with an acc
 | **Bundles** | View all shares with filters; revoke, extend expiry, or permanently delete |
 | **Reviewers** | Read-only list of users in the reviewer pool |
 | **Branding** | App name, logo, colors, footer text, and legal URLs (stored in `settings`; applied without redeploy) |
+| **Sharing** | Default share mode (invitation vs static link) for new bundles |
 
 Ensure `php artisan storage:link` has been run so uploaded logos are served from `public/storage`.
+
+### Production database (MySQL)
+
+SQLite works for local development and small single-node deployments. For production, use MySQL (or MariaDB):
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=filesharing
+DB_USERNAME=filesharing
+DB_PASSWORD=your-secure-password
+```
+
+Recommended MySQL settings:
+
+- Charset/collation: `utf8mb4` / `utf8mb4_unicode_ci`
+- Run migrations: `php artisan migrate --force`
+- Schedule regular backups of the database and `storage/` uploads
+- Use a dedicated database user with minimal privileges
+
+SQLite remains valid for dev, CI, and small installs where a separate database server is not required.
+
+### Queue workers
+
+Mail (invitations, OTP, approval notifications) is queued for async delivery. Set a queue driver in production:
+
+```env
+QUEUE_CONNECTION=database   # or redis
+```
+
+Run migrations (includes `jobs` table), then start a worker:
+
+```bash
+php artisan queue:work --sleep=3 --tries=3
+```
+
+For Docker, the image runs `queue:work --stop-when-empty` via cron each minute. For production VMs, use Supervisor or systemd to keep a worker process running.
+
+### Rate limiting & security
+
+Configurable via `.env`:
+
+| Variable | Default | Purpose |
+| -------- | ------- | ------- |
+| `OAUTH_RATE_LIMIT_PER_MINUTE` | 10 | Microsoft OAuth callback |
+| `DOWNLOAD_RATE_LIMIT_PER_MINUTE` | 30 | Bundle preview/download |
+| `OTP_RATE_LIMIT_PER_HOUR` | 5 | OTP request per recipient email |
+| `SESSION_IDLE_TIMEOUT` | 60 | Minutes of inactivity before logout |
+
+Security headers (CSP, `X-Frame-Options`, etc.) are applied globally. Session cookies use `Secure` in production. See [docs/SMOKE_TEST.md](docs/SMOKE_TEST.md) for pre-release QA checklist.
 
 ## Known issues
 

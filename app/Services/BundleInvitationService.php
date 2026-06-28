@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AuditEvent;
 use App\Enums\BundleStatus;
+use App\Enums\ShareMode;
 use App\Mail\BundleInvitationMail;
 use App\Mail\BundleOtpMail;
 use App\Models\Bundle;
@@ -19,7 +20,11 @@ class BundleInvitationService
 {
     public function usesInvitationMode(?Bundle $bundle = null): bool
     {
-        return config('sharing.default_share_mode', 'invitation') === 'invitation';
+        if ($bundle !== null) {
+            return $bundle->share_mode === ShareMode::Invitation;
+        }
+
+        return app(SharingSettings::class)->defaultShareMode() === ShareMode::Invitation;
     }
 
     /**
@@ -63,7 +68,7 @@ class BundleInvitationService
     {
         $recipient->update(['invited_at' => now()]);
 
-        Mail::to($recipient->email)->send(new BundleInvitationMail($recipient));
+        Mail::to($recipient->email)->queue(new BundleInvitationMail($recipient));
 
         Audit::log(AuditEvent::InvitationSent, [
             'bundle' => $recipient->bundle,
@@ -103,7 +108,7 @@ class BundleInvitationService
             'otp_attempts' => 0,
         ]);
 
-        Mail::to($recipient->email)->send(new BundleOtpMail($recipient, $code));
+        Mail::to($recipient->email)->queue(new BundleOtpMail($recipient, $code));
 
         Audit::log(AuditEvent::OtpRequested, [
             'bundle' => $recipient->bundle,

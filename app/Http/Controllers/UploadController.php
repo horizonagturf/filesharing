@@ -10,6 +10,7 @@ use App\Models\BundleRecipient;
 use App\Models\File;
 use App\Services\BundleApprovalService;
 use App\Services\BundleInvitationService;
+use App\Services\ShareModePolicy;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ class UploadController extends Controller
     public function __construct(
         private readonly BundleApprovalService $approvalService,
         private readonly BundleInvitationService $invitationService,
+        private readonly ShareModePolicy $shareModePolicy,
     ) {}
 
     public function createBundle(Request $request, Bundle $bundle)
@@ -31,6 +33,7 @@ class UploadController extends Controller
             'bundle' => new BundleResource($bundle),
             'baseUrl' => config('app.url'),
             'invitationMode' => $this->invitationService->usesInvitationMode($bundle),
+            'canUseStaticLink' => $this->shareModePolicy->canUseStaticLinks(Auth::user()),
         ]);
     }
 
@@ -42,15 +45,25 @@ class UploadController extends Controller
         $request->validate([
             'recipients' => 'nullable|array',
             'recipients.*' => 'email',
+            'share_mode' => 'nullable|in:invitation,static_link',
         ]);
 
+        $requested = $request->input('share_mode');
+
         try {
+            if ($requested === null) {
+                $shareMode = $bundle->share_mode ?? $this->shareModePolicy->defaultShareMode();
+            } else {
+                $shareMode = $this->shareModePolicy->resolveShareMode(Auth::user(), $requested);
+            }
+
             $bundle->update([
                 'expiry' => $request->expiry ?? null,
                 'password' => $request->password ?? null,
                 'title' => $request->title ?? null,
                 'description' => $request->description ?? null,
                 'max_downloads' => $request->max_downloads ?? 0,
+                'share_mode' => $shareMode,
             ]);
 
             if ($request->has('recipients') && $this->invitationService->usesInvitationMode($bundle)) {
@@ -58,6 +71,11 @@ class UploadController extends Controller
             }
 
             return response()->json(new BundleResource($bundle->fresh(['recipients'])));
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'result' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         } catch (Exception $e) {
             report($e);
 

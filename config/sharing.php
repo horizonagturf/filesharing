@@ -40,4 +40,8 @@ return [
     'hash_maxfilesize' => env('HASH_MAX_FILESIZE', '1G'),
 
     'default_share_mode' => env('DEFAULT_SHARE_MODE', 'invitation'),
+
+    'settings_defaults' => [
+        \App\Services\SharingSettings::KEY_DEFAULT_SHARE_MODE => null,
+    ],
 ];

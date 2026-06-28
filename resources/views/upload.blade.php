@@ -7,7 +7,8 @@
 
 	let baseUrl		= @js($baseUrl);
 	let bundle		= @js($bundle);
-	let invitationMode = @js($invitationMode);
+	let canUseStaticLink = @js($canUseStaticLink);
+	let invitationMode = bundle.share_mode ? bundle.share_mode === 'invitation' : @js($invitationMode);
 	let maxFiles	= @js(config('sharing.max_files'));
 	let maxFileSize = @js(Upload::fileMaxSize());
 
@@ -49,6 +50,10 @@
 			init: function() {
 				this.bundle = bundle
 
+				if (! this.bundle.share_mode) {
+					this.bundle.share_mode = invitationMode ? 'invitation' : 'static_link'
+				}
+
 				if (invitationMode && ! this.bundle.recipients) {
 					this.bundle.recipients = []
 				}
@@ -89,6 +94,19 @@
 				return true
 			},
 
+			isInvitationMode: function() {
+				return this.bundle.share_mode === 'invitation'
+			},
+
+			setShareMode: function(mode) {
+				this.bundle.share_mode = mode
+				invitationMode = mode === 'invitation'
+				if (invitationMode && ! this.bundle.recipients) {
+					this.bundle.recipients = []
+					this.bundle.recipients_text = ''
+				}
+			},
+
 			uploadStep: function() {
 				let errors = null
 				document.getElementById('upload-title').setCustomValidity('')
@@ -97,7 +115,7 @@
 				document.getElementById('upload-password').setCustomValidity('')
 				document.getElementById('upload-max-downloads').setCustomValidity('')
 
-				if (invitationMode) {
+				if (this.isInvitationMode()) {
 					document.getElementById('upload-recipients').setCustomValidity('')
 					const emails = this.parseRecipients(this.bundle.recipients_text || '')
 					if (emails.length === 0) {
@@ -134,7 +152,8 @@
 						description: this.easymde.value(),
 						max_downloads: this.bundle.max_downloads,
 						password: this.bundle.password,
-						recipients: invitationMode ? this.parseRecipients(this.bundle.recipients_text || '') : [],
+						recipients: this.isInvitationMode() ? this.parseRecipients(this.bundle.recipients_text || '') : [],
+						share_mode: this.bundle.share_mode,
 						auth: this.bundle.owner_token
 					}
 				})
@@ -333,6 +352,9 @@
 			syncData: function(bundle) {
 				if (Object.keys(bundle).length > 0) {
 					this.bundle = bundle
+					if (bundle.share_mode) {
+						invitationMode = bundle.share_mode === 'invitation'
+					}
 				}
 			},
 
@@ -595,8 +617,48 @@
 						</div>
 					</div>
 
-					@if ($invitationMode)
+					@if ($canUseStaticLink)
 					<div class="mt-5">
+						<p class="font-title uppercase">@lang('sharing.share-mode')</p>
+						<div class="mt-2 space-y-2">
+							<label class="flex items-start gap-2 cursor-pointer">
+								<input
+									type="radio"
+									name="share_mode"
+									value="invitation"
+									class="mt-1"
+									:checked="bundle.share_mode === 'invitation'"
+									x-on:change="setShareMode('invitation')"
+								/>
+								<span>
+									<span class="font-medium">@lang('sharing.share-mode-invitation')</span>
+									<span class="block text-xs text-slate-500">@lang('sharing.share-mode-invitation-help')</span>
+								</span>
+							</label>
+							<label class="flex items-start gap-2 cursor-pointer">
+								<input
+									type="radio"
+									name="share_mode"
+									value="static_link"
+									class="mt-1"
+									:checked="bundle.share_mode === 'static_link'"
+									x-on:change="setShareMode('static_link')"
+								/>
+								<span>
+									<span class="font-medium">@lang('sharing.share-mode-static-link')</span>
+									<span class="block text-xs text-slate-500">@lang('sharing.share-mode-static-link-help')</span>
+								</span>
+							</label>
+						</div>
+						<p
+							x-show="bundle.share_mode === 'static_link'"
+							class="mt-2 p-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded"
+						>@lang('sharing.static-link-warning')</p>
+					</div>
+					@endif
+
+					@if ($canUseStaticLink || $invitationMode)
+					<div class="mt-5" @if ($canUseStaticLink) x-show="isInvitationMode()" x-cloak @endif>
 						<p class="font-title uppercase">
 							@lang('invitation.recipients')
 							<span class="text-base">*</span>
@@ -746,13 +808,13 @@
 									@lang('approval.status-pending_approval')
 								</h2>
 								<p class="text-slate-600">@lang('approval.pending-message')</p>
-								<template x-if="invitationMode && bundle.recipients && bundle.recipients.length">
+								<template x-if="isInvitationMode() && bundle.recipients && bundle.recipients.length">
 									<p class="text-sm text-slate-500 mt-2">@lang('invitation.recipients-pending')</p>
 								</template>
 							</div>
 						</template>
 
-						<template x-if="invitationMode && (bundle.status === 'sent' || bundle.status === 'approved') && bundle.recipients && bundle.recipients.length">
+						<template x-if="isInvitationMode() && (bundle.status === 'sent' || bundle.status === 'approved') && bundle.recipients && bundle.recipients.length">
 							<div>
 								<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
 									@lang('invitation.recipients-sent')
@@ -780,7 +842,7 @@
 							</div>
 						</template>
 
-						<template x-if="! invitationMode && bundle.preview_link">
+						<template x-if="! isInvitationMode() && bundle.preview_link">
 							<div>
 						<h2 class="font-title text-2xl mb-5 text-primary font-medium uppercase">
 							@lang('app.download-links')
