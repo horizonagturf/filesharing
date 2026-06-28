@@ -148,6 +148,7 @@ Also ensure `APP_URL` matches the URL users visit and leave `UPLOAD_LIMIT_IPS` e
 | `UPLOAD_MAX_FILESIZE` | Max per-file size (also configure PHP `post_max_size`, `upload_max_filesize`, `memory_limit`) |
 | `UPLOAD_MAX_FILES` | Max files per bundle |
 | `UPLOAD_PREVENT_DUPLICATES` | Block duplicate files (`true` / `false`) |
+| `UPLOAD_BLOCKED_EXTENSIONS` | Comma-separated blocked extensions (no dots); unset uses built-in default; overridable in admin Sharing settings |
 | `HASH_MAX_FILESIZE` | Max size to hash for dedup checks |
 | `LIMIT_DOWNLOAD_RATE` | Download throttle (e.g. `100K`, `1M`) |
 | `UPLOAD_LIMIT_IPS` | IP whitelist when SSO disabled; **ignored when SSO enabled** |

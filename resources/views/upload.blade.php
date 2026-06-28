@@ -11,6 +11,7 @@
 	let invitationMode = bundle.share_mode ? bundle.share_mode === 'invitation' : @js($invitationMode);
 	let maxFiles	= @js(config('sharing.max_files'));
 	let maxFileSize = @js(Upload::fileMaxSize());
+	let blockedExtensions = @js($blockedExtensions);
 
 	document.addEventListener('alpine:init', () => {
 		Alpine.data('upload', () => ({
@@ -92,6 +93,18 @@
 
 			getBundle: function() {
 				return true
+			},
+
+			isBlockedFilename: function(name) {
+				const parts = name.split('.')
+				if (parts.length <= 1) {
+					return false
+				}
+
+				parts.shift()
+				const blocked = new Set(blockedExtensions.map((ext) => ext.toLowerCase()))
+
+				return parts.some((part) => blocked.has(part.toLowerCase()))
 			},
 
 			isInvitationMode: function() {
@@ -223,6 +236,13 @@
 						dictFileTooBig: '@lang('app.file-too-big')',
 						dictDefaultMessage: '@lang('app.dropzone-text')',
 						dictResponseError: '@lang('app.server-answered')',
+						accept: (file, done) => {
+							if (this.isBlockedFilename(file.name)) {
+								done('@lang('app.file-type-blocked')')
+							} else {
+								done()
+							}
+						},
 					})
 
 					this.dropzone.on('addedfile', (file) => {

@@ -51,6 +51,8 @@ Manual QA script for enterprise deployment sign-off. Run against staging before 
 
 ## Security
 
+- [ ] Upload `.exe` rejected; upload `.txt` accepted
+- [ ] Admin Sharing settings blocklist override takes effect
 - [ ] OAuth callback rate limit returns 429 when exceeded (optional stress test)
 - [ ] Download endpoints rate limit under load (optional)
 - [ ] Security headers present (`X-Frame-Options`, `X-Content-Type-Options`, CSP)

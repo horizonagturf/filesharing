@@ -82,6 +82,7 @@ return [
     'do-login' => '로그인',
     'pending' => 'Drafts',
     'duplicate-file' => '이 파일이 번들에 이미 있습니다',
+    'file-type-blocked' => '허용되지 않는 파일 형식입니다',
     'unexpected-error' => '예기치 않은 오류가 발생했습니다',
     'to-get-bundles' => 'to get your bundles',
     'you-are-logged-in' => '"username"로 로그인 했습니다',

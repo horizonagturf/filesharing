@@ -82,6 +82,7 @@ return [
     'do-login' => 'Login now',
     'pending' => 'Drafts',
     'duplicate-file' => 'This file already exists in the bundle',
+    'file-type-blocked' => 'This file type is not allowed',
     'unexpected-error' => 'An unexpected error has occurred',
     'to-get-bundles' => 'to get your bundles',
     'you-are-logged-in' => 'You are logged in as ":username"',

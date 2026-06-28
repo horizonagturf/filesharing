@@ -82,6 +82,7 @@ return [
     'do-login' => 'Authentifiez-vous',
     'pending' => 'Brouillons',
     'duplicate-file' => 'Ce fichier existe déjà dans l\'archive',
+    'file-type-blocked' => 'Ce type de fichier n\'est pas autorisé',
     'unexpected-error' => 'Une erreur inattendue est survenue',
     'to-get-bundles' => 'pour accéder à vos archives',
     'you-are-logged-in' => 'Vous êtes connecté(e) en tant que ":username"',

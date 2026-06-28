@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\ShareMode;
+use App\Helpers\Upload;
 use App\Services\SharingSettings;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -31,6 +32,10 @@ class ManageSharing extends Page implements HasForms
     {
         $this->form->fill([
             'default_share_mode' => $sharing->defaultShareMode()->value,
+            'override_blocked_extensions' => $sharing->hasBlockedExtensionsOverride(),
+            'blocked_extensions' => $sharing->hasBlockedExtensionsOverride()
+                ? $sharing->blockedExtensions()
+                : [],
         ]);
     }
 
@@ -50,6 +55,20 @@ class ManageSharing extends Page implements HasForms
                             ->required()
                             ->native(false),
                     ]),
+                Forms\Components\Section::make('Blocked file types')
+                    ->description('Reject uploads whose filename contains a blocked extension.')
+                    ->schema([
+                        Forms\Components\Toggle::make('override_blocked_extensions')
+                            ->label('Override environment default')
+                            ->live(),
+                        Forms\Components\TagsInput::make('blocked_extensions')
+                            ->label('Blocked extensions')
+                            ->placeholder('exe')
+                            ->helperText(
+                                'Environment default: '.implode(', ', Upload::parseExtensionList((string) config('sharing.upload_blocked_extensions', '')))
+                            )
+                            ->visible(fn (Forms\Get $get): bool => (bool) $get('override_blocked_extensions')),
+                    ]),
             ])
             ->statePath('data');
     }
@@ -60,6 +79,12 @@ class ManageSharing extends Page implements HasForms
         $mode = ShareMode::from($data['default_share_mode']);
 
         $sharing->setDefaultShareMode($mode);
+
+        if ($data['override_blocked_extensions'] ?? false) {
+            $sharing->setBlockedExtensions($data['blocked_extensions'] ?? []);
+        } else {
+            $sharing->setBlockedExtensions(null);
+        }
 
         Notification::make()
             ->title('Sharing settings saved')

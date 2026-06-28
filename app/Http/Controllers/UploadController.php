@@ -11,6 +11,7 @@ use App\Models\File;
 use App\Services\BundleApprovalService;
 use App\Services\BundleInvitationService;
 use App\Services\ShareModePolicy;
+use App\Services\SharingSettings;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ class UploadController extends Controller
         private readonly BundleApprovalService $approvalService,
         private readonly BundleInvitationService $invitationService,
         private readonly ShareModePolicy $shareModePolicy,
+        private readonly SharingSettings $sharingSettings,
     ) {}
 
     public function createBundle(Request $request, Bundle $bundle)
@@ -34,6 +36,7 @@ class UploadController extends Controller
             'baseUrl' => config('app.url'),
             'invitationMode' => $this->invitationService->usesInvitationMode($bundle),
             'canUseStaticLink' => $this->shareModePolicy->canUseStaticLinks(Auth::user()),
+            'blockedExtensions' => $this->sharingSettings->blockedExtensions(),
         ]);
     }
 
@@ -98,6 +101,15 @@ class UploadController extends Controller
 
         // Generating the file name
         $original = $request->file->getClientOriginalName();
+        $blocked = $this->sharingSettings->blockedExtensions();
+
+        if (Upload::isBlockedFilename($original, $blocked)) {
+            return response()->json([
+                'result' => false,
+                'message' => __('app.file-type-blocked'),
+            ], 422);
+        }
+
         $filename = substr(sha1($original.time()), 0, mt_rand(20, 30));
 
         // Moving file to final destination

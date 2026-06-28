@@ -6,6 +6,7 @@ use App\Enums\BundleStatus;
 use App\Enums\ShareMode;
 use App\Models\Bundle;
 use App\Models\User;
+use App\Services\SharingSettings;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -227,5 +228,157 @@ class UploadWorkflowTest extends TestCase
         $this->assertSame('3600', $bundle->expiry);
         $this->assertSame(5, $bundle->max_downloads);
         $this->assertSame('secret', $bundle->password);
+    }
+
+    public function test_blocked_file_extension_returns_422(): void
+    {
+        Storage::fake('uploads');
+        config(['sharing.upload_blocked_extensions' => 'exe,bat,ps1']);
+
+        $user = User::factory()->create(['requires_approval' => false]);
+        $slug = 'blocked-'.Str::lower(Str::random(8));
+        $this->slugs[] = $slug;
+
+        $bundle = Bundle::create([
+            'user_id' => $user->id,
+            'slug' => $slug,
+            'owner_token' => substr(sha1($slug.'owner'), 0, 15),
+            'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
+            'completed' => false,
+            'status' => BundleStatus::Draft,
+            'expiry' => '86400',
+            'fullsize' => 0,
+            'max_downloads' => 0,
+            'downloads' => 0,
+        ]);
+
+        $headers = [
+            'X-Upload-Auth' => $bundle->owner_token,
+            'X-Requested-With' => 'XMLHttpRequest',
+        ];
+
+        $this->actingAsUser($user)
+            ->postJson("/upload/{$slug}/file", [
+                'uuid' => (string) Str::uuid(),
+                'file' => UploadedFile::fake()->create('malware.exe', 10, 'application/octet-stream'),
+            ], $headers)
+            ->assertUnprocessable()
+            ->assertJsonPath('message', __('app.file-type-blocked'));
+    }
+
+    public function test_allowed_file_extension_uploads_successfully_with_blocklist_enabled(): void
+    {
+        Storage::fake('uploads');
+        config(['sharing.upload_blocked_extensions' => 'exe,bat,ps1']);
+
+        $user = User::factory()->create(['requires_approval' => false]);
+        $slug = 'allowed-'.Str::lower(Str::random(8));
+        $this->slugs[] = $slug;
+
+        $bundle = Bundle::create([
+            'user_id' => $user->id,
+            'slug' => $slug,
+            'owner_token' => substr(sha1($slug.'owner'), 0, 15),
+            'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
+            'completed' => false,
+            'status' => BundleStatus::Draft,
+            'expiry' => '86400',
+            'fullsize' => 0,
+            'max_downloads' => 0,
+            'downloads' => 0,
+        ]);
+
+        $headers = [
+            'X-Upload-Auth' => $bundle->owner_token,
+            'X-Requested-With' => 'XMLHttpRequest',
+        ];
+
+        $this->actingAsUser($user)
+            ->postJson("/upload/{$slug}/file", [
+                'uuid' => (string) Str::uuid(),
+                'file' => UploadedFile::fake()->create('document.txt', 10, 'text/plain'),
+            ], $headers)
+            ->assertOk()
+            ->assertJsonPath('original', 'document.txt');
+    }
+
+    public function test_db_override_can_disable_blocklist(): void
+    {
+        Storage::fake('uploads');
+        config(['sharing.upload_blocked_extensions' => 'exe,bat,ps1']);
+
+        app(SharingSettings::class)->setBlockedExtensions([]);
+
+        $user = User::factory()->create(['requires_approval' => false]);
+        $slug = 'override-off-'.Str::lower(Str::random(8));
+        $this->slugs[] = $slug;
+
+        $bundle = Bundle::create([
+            'user_id' => $user->id,
+            'slug' => $slug,
+            'owner_token' => substr(sha1($slug.'owner'), 0, 15),
+            'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
+            'completed' => false,
+            'status' => BundleStatus::Draft,
+            'expiry' => '86400',
+            'fullsize' => 0,
+            'max_downloads' => 0,
+            'downloads' => 0,
+        ]);
+
+        $headers = [
+            'X-Upload-Auth' => $bundle->owner_token,
+            'X-Requested-With' => 'XMLHttpRequest',
+        ];
+
+        $this->actingAsUser($user)
+            ->postJson("/upload/{$slug}/file", [
+                'uuid' => (string) Str::uuid(),
+                'file' => UploadedFile::fake()->create('malware.exe', 10, 'application/octet-stream'),
+            ], $headers)
+            ->assertOk()
+            ->assertJsonPath('original', 'malware.exe');
+    }
+
+    public function test_db_override_can_add_custom_blocked_extension(): void
+    {
+        Storage::fake('uploads');
+        config(['sharing.upload_blocked_extensions' => 'exe']);
+
+        app(SharingSettings::class)->setBlockedExtensions(['txt']);
+
+        $user = User::factory()->create(['requires_approval' => false]);
+        $slug = 'override-txt-'.Str::lower(Str::random(8));
+        $this->slugs[] = $slug;
+
+        $bundle = Bundle::create([
+            'user_id' => $user->id,
+            'slug' => $slug,
+            'owner_token' => substr(sha1($slug.'owner'), 0, 15),
+            'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
+            'completed' => false,
+            'status' => BundleStatus::Draft,
+            'expiry' => '86400',
+            'fullsize' => 0,
+            'max_downloads' => 0,
+            'downloads' => 0,
+        ]);
+
+        $headers = [
+            'X-Upload-Auth' => $bundle->owner_token,
+            'X-Requested-With' => 'XMLHttpRequest',
+        ];
+
+        $this->actingAsUser($user)
+            ->postJson("/upload/{$slug}/file", [
+                'uuid' => (string) Str::uuid(),
+                'file' => UploadedFile::fake()->create('document.txt', 10, 'text/plain'),
+            ], $headers)
+            ->assertUnprocessable()
+            ->assertJsonPath('message', __('app.file-type-blocked'));
     }
 }

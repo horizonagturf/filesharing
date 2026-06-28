@@ -253,4 +253,58 @@ class Upload
 
         return $value * $unit_multipliers[$unit];
     }
+
+    /**
+     * @return list<string>
+     */
+    public static function parseExtensionList(string $value): array
+    {
+        if ($value === '') {
+            return [];
+        }
+
+        $extensions = array_map(
+            fn (string $ext) => strtolower(ltrim(trim($ext), '.')),
+            explode(',', $value)
+        );
+
+        return array_values(array_unique(array_filter($extensions)));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function filenameExtensions(string $filename): array
+    {
+        $basename = pathinfo($filename, PATHINFO_BASENAME);
+        $parts = explode('.', $basename);
+
+        if (count($parts) <= 1) {
+            return [];
+        }
+
+        array_shift($parts);
+
+        return array_map('strtolower', $parts);
+    }
+
+    /**
+     * @param  list<string>  $blocked
+     */
+    public static function isBlockedFilename(string $filename, array $blocked): bool
+    {
+        if ($blocked === []) {
+            return false;
+        }
+
+        $blockedLookup = array_flip($blocked);
+
+        foreach (self::filenameExtensions($filename) as $extension) {
+            if (isset($blockedLookup[$extension])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

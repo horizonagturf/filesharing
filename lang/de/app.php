@@ -82,6 +82,7 @@ return [
     'do-login' => 'Login',
     'pending' => 'Entwürfe',
     'duplicate-file' => 'Diese Datei ist bereits Teil des Pakets',
+    'file-type-blocked' => 'Dieser Dateityp ist nicht erlaubt',
     'unexpected-error' => 'Ein unerwarteter Fehler ist aufgetreten',
     'to-get-bundles' => 'um Ihre Pakete zu sehen',
     'you-are-logged-in' => 'Sie sind eingelogged als ":username"',
