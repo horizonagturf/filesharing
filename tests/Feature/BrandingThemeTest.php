@@ -8,6 +8,17 @@ use Tests\TestCase;
 
 class BrandingThemeTest extends TestCase
 {
+    public function test_layout_renders_default_logo_favicon_and_css_variables(): void
+    {
+        $response = $this->get(route('login'));
+
+        $response->assertOk();
+        $response->assertSee('images/logo.svg', false);
+        $response->assertSee('favicon.svg', false);
+        $response->assertSee('favicon.ico', false);
+        $response->assertSee('apple-touch-icon.png', false);
+    }
+
     public function test_layout_renders_logo_footer_and_css_variables(): void
     {
         $branding = app(BrandingSettings::class);

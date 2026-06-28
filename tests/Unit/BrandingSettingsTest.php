@@ -34,6 +34,13 @@ class BrandingSettingsTest extends TestCase
         $this->assertStringContainsString('storage/branding/logo.png', $branding->logoUrl());
     }
 
+    public function test_logo_url_falls_back_to_default_when_not_set(): void
+    {
+        $branding = app(BrandingSettings::class);
+
+        $this->assertStringContainsString('images/logo.svg', $branding->logoUrl());
+    }
+
     public function test_show_credit_footer_uses_env_default_when_not_overridden(): void
     {
         config(['branding.show_credit' => true]);

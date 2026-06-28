@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Secure File Send">
+  <defs>
+    <linearGradient id="brand" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7e22ce"/>
+      <stop offset="100%" stop-color="#9333ea"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#brand)"/>
+  <path fill="#fff" d="M20 22h24a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2V24a2 2 0 0 1 2-2zm0 4v16h24V26H20z"/>
+  <path fill="#fff" d="M32 18l10 10h-6v8h-8v-8h-6z"/>
+</svg>
