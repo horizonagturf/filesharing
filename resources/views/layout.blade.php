@@ -12,6 +12,9 @@
 			{{ $branding->appName() }}
 		</title>
 		<meta name="theme-color" content="{{ $branding->get(\App\Services\BrandingSettings::KEY_PRIMARY_COLOR, '#7e22ce') }}">
+		<link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
+		<link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+		<link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
 		<meta name="csrf-token" content="{{ csrf_token() }}">
         <style>
             :root {

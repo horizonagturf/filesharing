@@ -6,9 +6,7 @@
 	<h1 class="relative font-title font-medium font-body text-4xl text-center text-white uppercase">
 		<div class="grow text-center">
 			<a href="{{ route('homepage') }}" class="inline-flex items-center justify-center gap-3">
-                @if ($logoUrl)
-                    <img src="{{ $logoUrl }}" alt="{{ $branding->appName() }}" class="h-10 w-auto max-w-[160px] object-contain">
-                @endif
+                <img src="{{ $logoUrl }}" alt="{{ $branding->appName() }}" class="h-10 w-auto max-w-[160px] object-contain">
 				{{ $branding->appName() }}
 			</a>
 		</div>

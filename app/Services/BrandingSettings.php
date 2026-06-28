@@ -23,6 +23,8 @@ class BrandingSettings
 
     public const KEY_SHOW_CREDIT = 'branding.show_credit';
 
+    public const DEFAULT_LOGO_PATH = 'images/logo.svg';
+
     private const CACHE_KEY = 'branding.settings';
 
     public function get(string $key, ?string $default = null): ?string
@@ -76,15 +78,15 @@ class BrandingSettings
         return $value !== '0';
     }
 
-    public function logoUrl(): ?string
+    public function logoUrl(): string
     {
         $path = $this->get(self::KEY_LOGO_PATH);
 
-        if ($path === null || $path === '') {
-            return null;
+        if ($path !== null && $path !== '') {
+            return asset('storage/'.$path);
         }
 
-        return asset('storage/'.$path);
+        return asset(self::DEFAULT_LOGO_PATH);
     }
 
     /**
