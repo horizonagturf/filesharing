@@ -2,12 +2,14 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\AvatarProviders\InitialsAvatarProvider;
 use App\Http\Middleware\RedirectToAppLogin;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -31,9 +33,16 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Purple,
             ])
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->navigationGroups([
                 NavigationGroup::make('Administration'),
                 NavigationGroup::make('Configuration'),
+            ])
+            ->navigationItems([
+                NavigationItem::make(__('app.nav-app-home'))
+                    ->url(fn () => route('homepage'))
+                    ->icon('heroicon-o-home')
+                    ->sort(-3),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

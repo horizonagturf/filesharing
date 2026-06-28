@@ -129,6 +129,7 @@ class AdminPanelTest extends TestCase
         $this->actingAsUser($admin)
             ->get('/admin')
             ->assertOk()
-            ->assertSee(__('app.nav-back-to-app'));
+            ->assertSee(__('app.nav-back-to-app'))
+            ->assertSee(__('app.nav-app-home'));
     }
 }

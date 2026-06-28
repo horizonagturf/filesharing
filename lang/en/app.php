@@ -106,5 +106,6 @@ return [
     'account-last-login' => 'Last login',
     'account-view-bundles' => 'View my bundles',
     'nav-back-to-app' => 'Back to app',
+    'nav-app-home' => 'Home',
     'open' => 'Open',
 ];
