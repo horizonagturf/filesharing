@@ -12,6 +12,7 @@
 	let maxFiles	= @js(config('sharing.max_files'));
 	let maxFileSize = @js(Upload::fileMaxSize());
 	let blockedExtensions = @js($blockedExtensions);
+	let fileTypeBlockedMessage = @js(__('app.file-type-blocked'));
 
 	document.addEventListener('alpine:init', () => {
 		Alpine.data('upload', () => ({
@@ -238,7 +239,7 @@
 						dictResponseError: '@lang('app.server-answered')',
 						accept: (file, done) => {
 							if (this.isBlockedFilename(file.name)) {
-								done('@lang('app.file-type-blocked')')
+								done(fileTypeBlockedMessage)
 							} else {
 								done()
 							}
