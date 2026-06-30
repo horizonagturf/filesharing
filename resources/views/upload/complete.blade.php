@@ -19,19 +19,31 @@
                             <div>
                                 <p class="text-sm font-medium text-gray-900" x-text="recipient.email"></p>
                                 <p class="text-xs text-gray-500">
-                                    <span x-show="recipient.verified_at">@lang('invitation.recipient-verified')</span>
-                                    <span x-show="! recipient.verified_at && recipient.invited_at">@lang('invitation.recipient-invited')</span>
-                                    <span x-show="! recipient.invited_at">@lang('invitation.recipient-pending')</span>
+                                    <span x-show="recipient.revoked_at">@lang('invitation.recipient-revoked')</span>
+                                    <span x-show="! recipient.revoked_at && recipient.verified_at">@lang('invitation.recipient-verified')</span>
+                                    <span x-show="! recipient.revoked_at && ! recipient.verified_at && recipient.invited_at">@lang('invitation.recipient-invited')</span>
+                                    <span x-show="! recipient.revoked_at && ! recipient.invited_at">@lang('invitation.recipient-pending')</span>
                                 </p>
                             </div>
+                            <div class="flex items-center gap-2">
                             <x-ui.button
                                 variant="link"
                                 size="sm"
                                 x-on:click="resendInvitation(recipient)"
-                                x-show="recipient.invited_at"
+                                x-show="recipient.invited_at && ! recipient.revoked_at"
                             >
                                 @lang('invitation.resend-invitation')
                             </x-ui.button>
+                            <x-ui.button
+                                variant="link"
+                                size="sm"
+                                class="!text-danger-600"
+                                x-on:click="revokeInvitation(recipient)"
+                                x-show="recipient.invited_at && ! recipient.revoked_at"
+                            >
+                                @lang('invitation.revoke-invitation')
+                            </x-ui.button>
+                            </div>
                         </li>
                     </template>
                 </ul>

@@ -30,6 +30,7 @@ class ApprovalRequestSubmittedMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
+            html: 'mail.approval-request-submitted-html',
             text: 'mail.approval-request-submitted',
         );
     }

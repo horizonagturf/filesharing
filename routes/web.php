@@ -42,6 +42,7 @@ Route::middleware(['can.upload'])->group(function () {
             Route::post('/complete', [UploadController::class, 'completeBundle'])->name('complete');
             Route::delete('/delete', [UploadController::class, 'deleteBundle'])->name('bundle.delete');
             Route::post('/recipients/{recipient}/resend', [UploadController::class, 'resendInvitation'])->name('recipients.resend');
+            Route::post('/recipients/{recipient}/revoke', [UploadController::class, 'revokeInvitation'])->name('recipients.revoke');
         });
     });
 });

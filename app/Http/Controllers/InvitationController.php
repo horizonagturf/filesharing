@@ -22,6 +22,7 @@ class InvitationController extends Controller
     {
         abort_unless($recipient->bundle_id === $bundle->id, 404);
         abort_unless($bundle->isShareable(), 404);
+        abort_if($recipient->isRevoked(), 404);
 
         if (RecipientAccess::isVerified($bundle, $recipient->email)) {
             RecipientAccess::grant($recipient);
@@ -47,6 +48,7 @@ class InvitationController extends Controller
     {
         abort_unless($recipient->bundle_id === $bundle->id, 404);
         abort_unless($bundle->isShareable(), 404);
+        abort_if($recipient->isRevoked(), 404);
         abort_if(! $this->invitationService->requiresOtp($bundle), 404);
 
         try {
@@ -76,6 +78,7 @@ class InvitationController extends Controller
     {
         abort_unless($recipient->bundle_id === $bundle->id, 404);
         abort_unless($bundle->isShareable(), 404);
+        abort_if($recipient->isRevoked(), 404);
         abort_if(! $this->invitationService->requiresOtp($bundle), 404);
 
         $request->validate([

@@ -72,6 +72,7 @@ class BundleResource extends JsonResource
                 'email' => $recipient->email,
                 'invited_at' => $recipient->invited_at,
                 'verified_at' => $recipient->verified_at,
+                'revoked_at' => $recipient->revoked_at,
             ])),
             'password' => $this->when($full === true, $this->password),
             'owner_token' => $this->when($full === true, $this->owner_token),

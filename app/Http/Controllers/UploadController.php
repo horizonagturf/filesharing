@@ -276,4 +276,20 @@ class UploadController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }
+
+    public function revokeInvitation(Request $request, Bundle $bundle, BundleRecipient $recipient)
+    {
+        abort_unless($recipient->bundle_id === $bundle->id, 404);
+
+        try {
+            $this->invitationService->revokeInvitation($recipient);
+
+            return response()->json([
+                'message' => __('invitation.invitation-revoked'),
+                'revoked_at' => $recipient->fresh()->revoked_at,
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
 }

@@ -77,6 +77,9 @@ class GroupResource extends Resource
                     ->label('Members'),
             ])
             ->defaultSort('name')
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

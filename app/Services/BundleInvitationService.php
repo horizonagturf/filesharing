@@ -46,6 +46,8 @@ class BundleInvitationService
 
     public function grantAccessWithoutOtp(BundleRecipient $recipient): void
     {
+        $this->assertRecipientActive($recipient);
+
         $recipient->update(['verified_at' => now()]);
 
         RecipientAccess::grant($recipient);
@@ -125,6 +127,8 @@ class BundleInvitationService
     {
         abort_if(! $this->requiresOtp($recipient->bundle), 404);
 
+        $this->assertRecipientActive($recipient);
+
         $key = $this->rateLimitKey($recipient);
 
         if (RateLimiter::tooManyAttempts($key, config('invitation.otp_rate_limit_per_hour', 5))) {
@@ -154,6 +158,8 @@ class BundleInvitationService
     public function verifyOtp(BundleRecipient $recipient, string $code): void
     {
         abort_if(! $this->requiresOtp($recipient->bundle), 404);
+
+        $this->assertRecipientActive($recipient);
 
         $code = trim($code);
 
@@ -212,7 +218,27 @@ class BundleInvitationService
     {
         abort_unless($recipient->bundle->isShareable(), 403);
 
+        if ($recipient->isRevoked()) {
+            throw new InvalidArgumentException(__('invitation.invitation-already-revoked'));
+        }
+
         $this->sendInvitation($recipient);
+    }
+
+    public function revokeInvitation(BundleRecipient $recipient): void
+    {
+        abort_unless($recipient->bundle->isShareable(), 403);
+
+        if ($recipient->isRevoked()) {
+            throw new InvalidArgumentException(__('invitation.invitation-already-revoked'));
+        }
+
+        $recipient->update(['revoked_at' => now()]);
+
+        Audit::log(AuditEvent::InvitationRevoked, [
+            'bundle' => $recipient->bundle,
+            'recipient_email' => $recipient->email,
+        ]);
     }
 
     public function previewUrl(Bundle $bundle): string
@@ -261,5 +287,12 @@ class BundleInvitationService
                 'recipient' => $recipient,
             ],
         );
+    }
+
+    private function assertRecipientActive(BundleRecipient $recipient): void
+    {
+        if ($recipient->isRevoked()) {
+            abort(404);
+        }
     }
 }

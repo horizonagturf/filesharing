@@ -456,6 +456,26 @@ export function registerUploadWizard() {
                 });
         },
 
+        revokeInvitation(recipient) {
+            this.showModal(config.confirmRevokeInvitation, () => {
+                axios({
+                    url: BASE_URL + '/upload/' + this.bundle.slug + '/recipients/' + recipient.id + '/revoke',
+                    method: 'POST',
+                    data: {
+                        auth: this.bundle.owner_token,
+                    },
+                })
+                    .then((response) => {
+                        recipient.revoked_at = response.data.revoked_at ?? new Date().toISOString();
+                        this.showModal(config.invitationRevoked, () => {});
+                    })
+                    .catch((error) => {
+                        const message = error.response?.data?.message ?? 'Request failed';
+                        this.showModal(message, () => {});
+                    });
+            });
+        },
+
         countFilesOnServer() {
             let count = 0;
 

@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Filament;
 
+use App\Filament\Resources\GroupResource;
 use App\Filament\Resources\GroupResource\Pages\CreateGroup;
 use App\Filament\Resources\GroupResource\Pages\EditGroup;
+use App\Filament\Resources\GroupResource\Pages\ListGroups;
 use App\Models\Group;
 use App\Models\User;
 use App\Services\ApprovalPolicy;
@@ -12,6 +14,17 @@ use Tests\TestCase;
 
 class AdminGroupResourceTest extends TestCase
 {
+    public function test_groups_list_exposes_create_action(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->assertTrue(GroupResource::canCreate());
+
+        Livewire::actingAs($admin)
+            ->test(ListGroups::class)
+            ->assertTableHeaderActionsExistInOrder(['create']);
+    }
+
     public function test_admin_can_create_group_with_approval_flag(): void
     {
         $admin = User::factory()->admin()->create();

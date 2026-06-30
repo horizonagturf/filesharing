@@ -36,6 +36,7 @@ class RecipientAccess
             ->where('bundle_id', $bundle->id)
             ->where('email', strtolower($email))
             ->whereNotNull('verified_at')
+            ->whereNull('revoked_at')
             ->exists();
     }
 

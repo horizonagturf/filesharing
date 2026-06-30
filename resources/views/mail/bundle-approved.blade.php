@@ -1,10 +1,10 @@
-Your bundle has been approved and is ready to share.
+{{ __('approval.mail.approved-body') }}
 
-Title: {{ $bundle->title ?? __('approval.untitled-bundle') }}
+{{ __('approval.mail.bundle-title') }}: {{ $bundle->title ?? __('approval.untitled-bundle') }}
 
 @if ($bundle->share_mode === \App\Enums\ShareMode::Invitation)
-Invitations have been sent to your recipients.
+{{ __('approval.mail.approved-invitations-sent') }}
 @else
-Preview: {{ $bundle->preview_link }}
-Download: {{ $bundle->download_link }}
+{{ __('approval.mail.approved-preview') }}: {!! $bundle->preview_link !!}
+{{ __('approval.mail.approved-download') }}: {!! $bundle->download_link !!}
 @endif

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\AuditEvent;
 use App\Enums\BundleStatus;
 use App\Enums\ShareMode;
 use App\Mail\BundleInvitationMail;
@@ -232,6 +233,99 @@ class InvitationWorkflowTest extends TestCase
 
         $this->assertSame(1, BundleRecipient::query()->where('bundle_id', $bundle->id)->count());
         Mail::assertQueued(BundleInvitationMail::class, 1);
+    }
+
+    public function test_owner_can_revoke_invitation(): void
+    {
+        $user = User::factory()->create(['requires_approval' => false]);
+        $bundle = $this->createBundle($user, BundleStatus::Sent, completed: true);
+        $recipient = $this->addRecipient($bundle, 'guest@example.com', invited: true);
+
+        $this->actingAsUser($user)
+            ->postJson("/upload/{$bundle->slug}/recipients/{$recipient->id}/revoke", [
+                'auth' => $bundle->owner_token,
+            ], $this->uploadHeaders($bundle))
+            ->assertOk()
+            ->assertJsonPath('message', __('invitation.invitation-revoked'));
+
+        $recipient->refresh();
+        $this->assertNotNull($recipient->revoked_at);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'event_type' => AuditEvent::InvitationRevoked->value,
+            'recipient_email' => 'guest@example.com',
+        ]);
+    }
+
+    public function test_revoked_recipient_cannot_use_signed_invitation_url(): void
+    {
+        $user = User::factory()->create(['requires_approval' => false]);
+        $bundle = $this->createBundle($user, BundleStatus::Sent, completed: true);
+        $recipient = $this->addRecipient($bundle, 'guest@example.com', invited: true);
+        $recipient->update(['revoked_at' => now()]);
+
+        $signedShow = URL::temporarySignedRoute('invitation.show', now()->addHour(), [
+            'bundle' => $bundle,
+            'recipient' => $recipient,
+        ]);
+
+        $this->get($signedShow)->assertNotFound();
+    }
+
+    public function test_revoked_verified_recipient_cannot_preview_bundle(): void
+    {
+        $user = User::factory()->create(['requires_approval' => false]);
+        $bundle = $this->createBundle($user, BundleStatus::Sent, completed: true);
+        $recipient = $this->addRecipient($bundle, 'guest@example.com', invited: true);
+        $recipient->update(['verified_at' => now()]);
+
+        $this->withSession(['recipient_access.'.$bundle->id => 'guest@example.com'])
+            ->get("/bundle/{$bundle->slug}/preview")
+            ->assertOk();
+
+        $recipient->update(['revoked_at' => now()]);
+
+        $this->withSession(['recipient_access.'.$bundle->id => 'guest@example.com'])
+            ->get("/bundle/{$bundle->slug}/preview")
+            ->assertForbidden();
+    }
+
+    public function test_resend_on_revoked_recipient_returns_422(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create(['requires_approval' => false]);
+        $bundle = $this->createBundle($user, BundleStatus::Sent, completed: true);
+        $recipient = $this->addRecipient($bundle, 'guest@example.com', invited: true);
+        $recipient->update(['revoked_at' => now()]);
+
+        $this->actingAsUser($user)
+            ->postJson("/upload/{$bundle->slug}/recipients/{$recipient->id}/resend", [
+                'auth' => $bundle->owner_token,
+            ], $this->uploadHeaders($bundle))
+            ->assertStatus(422)
+            ->assertJsonPath('message', __('invitation.invitation-already-revoked'));
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_non_owner_cannot_revoke_invitation(): void
+    {
+        $owner = User::factory()->create(['requires_approval' => false]);
+        $other = User::factory()->create();
+        $bundle = $this->createBundle($owner, BundleStatus::Sent, completed: true);
+        $recipient = $this->addRecipient($bundle, 'guest@example.com', invited: true);
+
+        $this->actingAsUser($other)
+            ->postJson("/upload/{$bundle->slug}/recipients/{$recipient->id}/revoke", [
+                'auth' => $bundle->owner_token,
+            ], [
+                'X-Upload-Auth' => 'wrong-token',
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->assertForbidden();
+
+        $this->assertNull($recipient->fresh()->revoked_at);
     }
 
     public function test_store_bundle_syncs_recipient_emails(): void

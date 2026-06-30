@@ -1,9 +1,9 @@
-Your bundle was denied and cannot be shared.
+{{ __('approval.mail.denied-body') }}
 
-Title: {{ $bundle->title ?? __('approval.untitled-bundle') }}
+{{ __('approval.mail.bundle-title') }}: {{ $bundle->title ?? __('approval.untitled-bundle') }}
 
-Reason: {{ $reason }}
+{{ __('approval.mail.reason') }}: {{ $reason }}
 
-You may edit your bundle and submit it again for approval.
+{{ __('approval.mail.denied-resubmit') }}
 
-Edit: {{ route('upload.create.show', $bundle) }}
+{{ __('approval.mail.denied-cta') }}: {!! route('upload.create.show', $bundle) !!}

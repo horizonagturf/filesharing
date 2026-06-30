@@ -31,6 +31,7 @@ class BundleDeniedMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
+            html: 'mail.bundle-denied-html',
             text: 'mail.bundle-denied',
         );
     }

@@ -9,6 +9,7 @@ enum AuditEvent: string
     case BundleApproved = 'bundle.approved';
     case BundleDenied = 'bundle.denied';
     case InvitationSent = 'invitation.sent';
+    case InvitationRevoked = 'invitation.revoked';
     case OtpRequested = 'otp.requested';
     case OtpVerified = 'otp.verified';
     case OtpFailed = 'otp.failed';

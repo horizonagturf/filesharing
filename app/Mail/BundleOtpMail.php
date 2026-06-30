@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\BundleRecipient;
+use App\Services\BrandingSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -23,7 +24,7 @@ class BundleOtpMail extends Mailable implements ShouldQueue
     {
         return new Envelope(
             subject: __('invitation.mail.otp-subject', [
-                'app' => app(\App\Services\BrandingSettings::class)->appName(),
+                'app' => app(BrandingSettings::class)->appName(),
             ]),
         );
     }
@@ -31,6 +32,7 @@ class BundleOtpMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
+            html: 'mail.bundle-otp-html',
             text: 'mail.bundle-otp',
         );
     }

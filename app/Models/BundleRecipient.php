@@ -15,6 +15,7 @@ class BundleRecipient extends Model
         'otp_expires_at',
         'otp_attempts',
         'invited_at',
+        'revoked_at',
     ];
 
     protected function casts(): array
@@ -23,6 +24,7 @@ class BundleRecipient extends Model
             'verified_at' => 'datetime',
             'otp_expires_at' => 'datetime',
             'invited_at' => 'datetime',
+            'revoked_at' => 'datetime',
             'otp_attempts' => 'integer',
         ];
     }
@@ -35,6 +37,11 @@ class BundleRecipient extends Model
     public function isVerified(): bool
     {
         return $this->verified_at !== null;
+    }
+
+    public function isRevoked(): bool
+    {
+        return $this->revoked_at !== null;
     }
 
     public function hasActiveOtp(): bool

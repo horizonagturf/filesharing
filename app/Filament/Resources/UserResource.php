@@ -46,14 +46,18 @@ class UserResource extends Resource
                 Forms\Components\Select::make('requires_approval')
                     ->label('Requires approval')
                     ->options([
-                        '' => 'Inherit from groups',
-                        '1' => 'Yes',
-                        '0' => 'No',
+                        'inherit' => 'Inherit from groups',
+                        'yes' => 'Yes',
+                        'no' => 'No',
                     ])
-                    ->formatStateUsing(fn (?bool $state) => $state === null ? '' : ($state ? '1' : '0'))
-                    ->dehydrateStateUsing(fn (?string $state) => match ($state) {
-                        '1' => true,
-                        '0' => false,
+                    ->formatStateUsing(fn (?bool $state) => match ($state) {
+                        true => 'yes',
+                        false => 'no',
+                        default => 'inherit',
+                    })
+                    ->dehydrateStateUsing(fn ($state) => match ((string) $state) {
+                        'yes', '1' => true,
+                        'no', '0' => false,
                         default => null,
                     }),
                 Forms\Components\Select::make('groups')

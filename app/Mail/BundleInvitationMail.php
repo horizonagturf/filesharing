@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\BundleRecipient;
+use App\Services\BrandingSettings;
 use App\Services\BundleInvitationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,7 +29,7 @@ class BundleInvitationMail extends Mailable implements ShouldQueue
         return new Envelope(
             subject: __('invitation.mail.invitation-subject', [
                 'title' => $this->recipient->bundle->title ?? __('invitation.untitled-bundle'),
-                'app' => app(\App\Services\BrandingSettings::class)->appName(),
+                'app' => app(BrandingSettings::class)->appName(),
             ]),
         );
     }
@@ -36,6 +37,7 @@ class BundleInvitationMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
+            html: 'mail.bundle-invitation-html',
             text: 'mail.bundle-invitation',
         );
     }

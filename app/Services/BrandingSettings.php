@@ -89,6 +89,13 @@ class BrandingSettings
         return asset(self::DEFAULT_LOGO_PATH);
     }
 
+    public function primaryColorHex(): string
+    {
+        $hex = $this->get(self::KEY_PRIMARY_COLOR, '#7e22ce');
+
+        return str_starts_with($hex, '#') ? $hex : '#'.$hex;
+    }
+
     /**
      * @return array<string, string>
      */

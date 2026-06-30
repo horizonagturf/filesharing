@@ -30,6 +30,7 @@ class BundleApprovedMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
+            html: 'mail.bundle-approved-html',
             text: 'mail.bundle-approved',
         );
     }

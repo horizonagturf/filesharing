@@ -23,6 +23,8 @@
         confirmDelete: @js(__('app.confirm-delete')),
         confirmDeleteBundle: @js(__('app.confirm-delete-bundle')),
         invitationResent: @js(__('invitation.invitation-resent')),
+        confirmRevokeInvitation: @js(__('invitation.confirm-revoke-invitation')),
+        invitationRevoked: @js(__('invitation.invitation-revoked')),
         dictMaxFilesExceeded: @js(__('app.files-count-limit')),
         dictFileTooBig: @js(__('app.file-too-big')),
         dictDefaultMessage: @js(__('app.dropzone-text')),
