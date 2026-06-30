@@ -33,7 +33,7 @@
     <div class="space-y-6 max-w-md">
         <div>
             <p class="mb-2 text-sm font-medium text-gray-700">@lang('invitation.invitation-request-otp')</p>
-            <form method="POST" action="{{ route('invitation.otp.request', ['bundle' => $bundle, 'recipient' => $recipient]).'?'.$signedQuery }}">
+            <form method="POST" action="{{ $otpRequestUrl }}">
                 @csrf
                 <x-ui.button type="submit" variant="primary" class="w-full">
                     @lang('invitation.invitation-request-otp')
@@ -43,7 +43,7 @@
 
         <div class="border-t border-gray-100 pt-6">
             <p class="mb-2 text-sm font-medium text-gray-700">@lang('invitation.invitation-verify-otp')</p>
-            <form method="POST" action="{{ route('invitation.otp.verify', ['bundle' => $bundle, 'recipient' => $recipient]).'?'.$signedQuery }}" class="space-y-4">
+            <form method="POST" action="{{ $otpVerifyUrl }}" class="space-y-4">
                 @csrf
                 <x-ui.input
                     id="code"

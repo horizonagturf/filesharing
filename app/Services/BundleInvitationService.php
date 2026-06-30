@@ -108,14 +108,17 @@ class BundleInvitationService
 
     public function invitationUrl(BundleRecipient $recipient): string
     {
-        return URL::temporarySignedRoute(
-            'invitation.show',
-            now()->addDays(config('invitation.invitation_link_days', 30)),
-            [
-                'bundle' => $recipient->bundle,
-                'recipient' => $recipient,
-            ],
-        );
+        return $this->temporarySignedInvitationRoute('invitation.show', $recipient);
+    }
+
+    public function otpRequestUrl(BundleRecipient $recipient): string
+    {
+        return $this->temporarySignedInvitationRoute('invitation.otp.request', $recipient);
+    }
+
+    public function otpVerifyUrl(BundleRecipient $recipient): string
+    {
+        return $this->temporarySignedInvitationRoute('invitation.otp.verify', $recipient);
     }
 
     public function requestOtp(BundleRecipient $recipient): void
@@ -246,5 +249,17 @@ class BundleInvitationService
     private function rateLimitKey(BundleRecipient $recipient): string
     {
         return 'otp-request:'.$recipient->bundle_id.':'.strtolower($recipient->email);
+    }
+
+    private function temporarySignedInvitationRoute(string $route, BundleRecipient $recipient): string
+    {
+        return URL::temporarySignedRoute(
+            $route,
+            now()->addDays(config('invitation.invitation_link_days', 30)),
+            [
+                'bundle' => $recipient->bundle,
+                'recipient' => $recipient,
+            ],
+        );
     }
 }

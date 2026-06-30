@@ -18,7 +18,7 @@ class InvitationController extends Controller
         private readonly BundleInvitationService $invitationService,
     ) {}
 
-    public function show(Request $request, Bundle $bundle, BundleRecipient $recipient): View|RedirectResponse
+    public function show(Bundle $bundle, BundleRecipient $recipient): View|RedirectResponse
     {
         abort_unless($recipient->bundle_id === $bundle->id, 404);
         abort_unless($bundle->isShareable(), 404);
@@ -38,7 +38,8 @@ class InvitationController extends Controller
         return view('invitation.show', [
             'bundle' => $bundle,
             'recipient' => $recipient,
-            'signedQuery' => $request->getQueryString(),
+            'otpRequestUrl' => $this->invitationService->otpRequestUrl($recipient),
+            'otpVerifyUrl' => $this->invitationService->otpVerifyUrl($recipient),
         ]);
     }
 

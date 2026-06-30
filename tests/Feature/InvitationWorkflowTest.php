@@ -172,14 +172,12 @@ class InvitationWorkflowTest extends TestCase
             'recipient' => $recipient,
         ]);
 
-        $this->get($signedShow)->assertOk()->assertSee('guest@example.com');
+        $showResponse = $this->get($signedShow)->assertOk()->assertSee('guest@example.com');
 
-        $signedOtp = URL::temporarySignedRoute('invitation.otp.request', now()->addHour(), [
-            'bundle' => $bundle,
-            'recipient' => $recipient,
-        ]);
+        preg_match('/<form method="POST" action="([^"]+\/otp\?[^"]+)"/', $showResponse->getContent(), $matches);
+        $this->assertNotEmpty($matches[1] ?? null);
 
-        $this->post($signedOtp)->assertRedirect();
+        $this->post(html_entity_decode($matches[1], ENT_QUOTES))->assertRedirect();
 
         Mail::assertQueued(BundleOtpMail::class, fn ($mail) => $mail->hasTo('guest@example.com'));
 
