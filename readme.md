@@ -157,9 +157,12 @@ See also [Configuration](#configuration) for locale, timezone, and other app set
 
 ### First-time server setup
 
+Production frontend assets (`public/build/`) are committed to the repository, so standalone deploys do **not** require Node.js or `npm run build` on the server.
+
 Run these steps in order on the application server:
 
 ```bash
+composer install --no-dev --optimize-autoloader
 cp .env.example .env          # fill in all required values (see above)
 php artisan key:generate
 php artisan migrate --force
@@ -408,9 +411,7 @@ volumes:
 - configure your domain name (e.g. files.yourdomain.com)
 - clone the repo or download the sources into the webroot folder
 - configure your webserver to point your domain name to the `./public` folder
-- run `composer install`
-- run `npm ci`
-- run `npm run build`
+- run `composer install --no-dev --optimize-autoloader` (production frontend assets are already in `public/build/`)
 - make sure the PHP process has write permission on the `./storage` folder
 - run `cp .env.example .env` and edit `.env` (see [Environment variables](#environment-variables))
 - generate the Laravel key: `php artisan key:generate`
@@ -494,7 +495,9 @@ To modify the sources, use Vite for frontend asset compilation:
 - configure your webserver to point your domain name to the `public/` folder
 - run `composer install`
 - run `npm install`
-- run `npm run dev` to recompile assets when changed
+- run `npm run dev` to recompile assets when changed (local dev only)
+
+When you change files under `resources/css/` or `resources/js/`, run `npm run build` and commit the updated `public/build/` directory so standalone production deploys stay in sync.
 
 ### Testing
 
