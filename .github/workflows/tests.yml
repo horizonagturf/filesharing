@@ -46,6 +46,9 @@ jobs:
           npm ci
           npm run build
 
+      - name: Verify committed frontend build is up to date
+        run: git diff --exit-code public/build
+
       - name: Run Pint
         run: ./vendor/bin/pint --test
 
@@ -92,6 +95,9 @@ jobs:
         run: |
           npm ci
           npm run build
+
+      - name: Verify committed frontend build is up to date
+        run: git diff --exit-code public/build
 
       - name: Run migrations (MySQL)
         env:
