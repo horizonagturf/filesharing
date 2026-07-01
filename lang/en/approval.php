@@ -47,6 +47,7 @@ return [
         'approved-download' => 'Download',
         'approved-preview-cta' => 'Preview bundle',
         'approved-download-cta' => 'Download files',
+        'approved-view-bundle-cta' => 'View bundle',
         'denied-body' => 'Your bundle was denied and cannot be shared.',
         'denied-resubmit' => 'You may edit your bundle and submit it again for approval.',
         'denied-cta' => 'Edit bundle',

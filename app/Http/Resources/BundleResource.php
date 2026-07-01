@@ -35,13 +35,16 @@ class BundleResource extends JsonResource
         $previewLink = $this->preview_link;
         $downloadLink = $this->download_link;
 
-        if ($invitationMode && ! $manualShareLinks) {
-            if ($full) {
+        if ($invitationMode && ! $manualShareLinks && $this->isShareable()) {
+            $guestPreviewLink = route('bundle.preview', ['bundle' => $this->resource]);
+            $guestDownloadLink = route('bundle.zip.download', ['bundle' => $this->resource]);
+
+            if ($request->attributes->get('bundle_guest_preview') || ! $full) {
+                $previewLink = $guestPreviewLink;
+                $downloadLink = $guestDownloadLink;
+            } else {
                 $previewLink = null;
                 $downloadLink = null;
-            } elseif ($this->isShareable()) {
-                $previewLink = route('bundle.preview', ['bundle' => $this->resource]);
-                $downloadLink = route('bundle.zip.download', ['bundle' => $this->resource]);
             }
         }
 

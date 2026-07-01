@@ -120,11 +120,18 @@ class MailRenderingTest extends TestCase
     public function test_bundle_approved_mail_renders_invitation_message_for_invitation_mode(): void
     {
         $bundle = $this->createBundle(ShareMode::Invitation);
+        $viewUrl = route('upload.create.show', $bundle);
 
-        $html = (new BundleApprovedMail($bundle))->render();
+        $mail = new BundleApprovedMail($bundle);
+        [$html, $text] = $this->renderMail($mail);
 
         $this->assertStringContainsString(__('approval.mail.approved-invitations-sent'), $html);
+        $this->assertStringContainsString(__('approval.mail.approved-view-bundle-cta'), $html);
+        $this->assertStringContainsString($viewUrl, $html);
         $this->assertStringNotContainsString(__('approval.mail.approved-preview-cta'), $html);
+
+        $this->assertStringContainsString(__('approval.mail.approved-invitations-sent'), $text);
+        $this->assertStringContainsString($viewUrl, $text);
     }
 
     public function test_bundle_denied_mail_renders_branded_html_and_text(): void

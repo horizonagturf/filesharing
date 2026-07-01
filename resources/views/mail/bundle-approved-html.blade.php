@@ -10,7 +10,12 @@
     ])
 
     @if ($bundle->share_mode === \App\Enums\ShareMode::Invitation)
-        <p style="margin: 0; font-size: 14px; color: #374151;">{{ __('approval.mail.approved-invitations-sent') }}</p>
+        <p style="margin: 0 0 20px; font-size: 14px; color: #374151;">{{ __('approval.mail.approved-invitations-sent') }}</p>
+
+        @include('mail.partials.button', [
+            'url' => route('upload.create.show', $bundle),
+            'label' => __('approval.mail.approved-view-bundle-cta'),
+        ])
     @else
         @include('mail.partials.button', [
             'url' => $bundle->preview_link,

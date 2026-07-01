@@ -29,6 +29,10 @@ export function registerAlpineComponents() {
                         window.location.href = window.__approvalIndexUrl;
                     })
                     .catch((error) => {
+                        if (window.isAuthFailure?.(error)) {
+                            return;
+                        }
+
                         this.error = error.response?.data?.message ?? window.__unexpectedError;
                         this.loading = false;
                     });
@@ -50,6 +54,10 @@ export function registerAlpineComponents() {
                         window.location.href = window.__approvalIndexUrl;
                     })
                     .catch((error) => {
+                        if (window.isAuthFailure?.(error)) {
+                            return;
+                        }
+
                         this.error = error.response?.data?.message ?? window.__unexpectedError;
                         this.loading = false;
                     });

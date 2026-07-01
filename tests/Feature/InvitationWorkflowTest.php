@@ -5,12 +5,14 @@ namespace Tests\Feature;
 use App\Enums\AuditEvent;
 use App\Enums\BundleStatus;
 use App\Enums\ShareMode;
+use App\Http\Resources\BundleResource;
 use App\Mail\BundleInvitationMail;
 use App\Mail\BundleOtpMail;
 use App\Models\Bundle;
 use App\Models\BundleRecipient;
 use App\Models\File;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
@@ -196,6 +198,49 @@ class InvitationWorkflowTest extends TestCase
         $this->get("/bundle/{$bundle->slug}/preview")
             ->assertOk()
             ->assertSee('Test bundle');
+    }
+
+    public function test_logged_in_user_gets_download_link_on_invitation_bundle_preview(): void
+    {
+        Mail::fake();
+
+        $uploader = User::factory()->create(['requires_approval' => false]);
+        $loggedInUser = User::factory()->create();
+        $bundle = $this->createBundle($uploader, BundleStatus::Sent, completed: true);
+        $recipient = $this->addRecipient($bundle, 'guest@example.com', invited: true);
+
+        $signedShow = URL::temporarySignedRoute('invitation.show', now()->addHour(), [
+            'bundle' => $bundle,
+            'recipient' => $recipient,
+        ]);
+
+        $showResponse = $this->get($signedShow)->assertOk();
+
+        preg_match('/<form method="POST" action="([^"]+\/otp\?[^"]+)"/', $showResponse->getContent(), $matches);
+        $this->assertNotEmpty($matches[1] ?? null);
+
+        $this->post(html_entity_decode($matches[1], ENT_QUOTES))->assertRedirect();
+
+        $code = $this->extractOtpFromMail();
+
+        $signedVerify = URL::temporarySignedRoute('invitation.otp.verify', now()->addHour(), [
+            'bundle' => $bundle,
+            'recipient' => $recipient,
+        ]);
+
+        $this->post($signedVerify, ['code' => $code])
+            ->assertRedirect(route('bundle.preview', ['bundle' => $bundle]));
+
+        $previewRequest = Request::create("/bundle/{$bundle->slug}/preview", 'GET');
+        $previewRequest->attributes->set('bundle_guest_preview', true);
+        $previewRequest->setUserResolver(fn () => $loggedInUser);
+
+        $resource = (new BundleResource($bundle->fresh(['files'])))->toArray($previewRequest);
+
+        $this->assertSame(
+            route('bundle.zip.download', ['bundle' => $bundle]),
+            $resource['download_link'],
+        );
     }
 
     public function test_internal_and_external_recipients_use_same_flow(): void

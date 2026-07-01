@@ -66,7 +66,11 @@ export function registerAlpineComponents() {
                         window.location.href = response.data.redirect;
                     }
                 })
-                .catch(() => {
+                .catch((error) => {
+                    if (window.isAuthFailure?.(error)) {
+                        return;
+                    }
+
                     this.loading = false;
                 });
         },

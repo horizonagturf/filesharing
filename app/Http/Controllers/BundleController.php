@@ -24,6 +24,8 @@ class BundleController extends Controller
             'recipient_email' => RecipientAccess::emailFor($bundle),
         ]);
 
+        $request->attributes->set('bundle_guest_preview', true);
+
         return view('download', [
             'bundle' => new BundleResource($bundle),
         ]);

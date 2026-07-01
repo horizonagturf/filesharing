@@ -41,7 +41,14 @@ export function registerAlpineComponents() {
             })
                 .then((response) => {
                     if (response.data.result === true) {
-                        window.location.href = BASE_URL + '/';
+                        const params = new URLSearchParams(window.location.search);
+                        const redirect = params.get('redirect');
+
+                        if (redirect && redirect.startsWith('/') && ! redirect.startsWith('//')) {
+                            window.location.href = BASE_URL + redirect;
+                        } else {
+                            window.location.href = BASE_URL + '/';
+                        }
                     }
                 })
                 .catch((error) => {

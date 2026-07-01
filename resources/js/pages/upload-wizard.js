@@ -133,12 +133,20 @@ export function registerUploadWizard() {
                     this.startDropzone();
                 })
                 .catch((error) => {
-                    const message = error.response?.data?.message
-                        ?? config.dictResponseError?.replace('{{statusCode}}', error.response?.status ?? '')
-                        ?? 'Request failed';
-
-                    this.showModal(message, () => {});
+                    this.handleRequestError(error);
                 });
+        },
+
+        handleRequestError(error, fallbackMessage = 'Request failed') {
+            if (window.isAuthFailure?.(error)) {
+                return;
+            }
+
+            const message = error.response?.data?.message
+                ?? config.dictResponseError?.replace('{{statusCode}}', error.response?.status ?? '')
+                ?? fallbackMessage;
+
+            this.showModal(message, () => {});
         },
 
         validateSettingsStep() {
@@ -204,7 +212,9 @@ export function registerUploadWizard() {
                         this.step = 3;
                         this.syncData(response.data);
                     })
-                    .catch(() => {});
+                    .catch((error) => {
+                        this.handleRequestError(error);
+                    });
             });
         },
 
@@ -278,7 +288,13 @@ export function registerUploadWizard() {
                 }
             });
 
-            this.dropzone.on('error', (file, message) => {
+            this.dropzone.on('error', (file, message, xhr) => {
+                if (xhr && window.isAuthFailure?.(xhr.status)) {
+                    window.redirectToLogin?.();
+
+                    return;
+                }
+
                 const fileIndex = this.findFileIndex(file.uuid);
                 if (fileIndex === null) {
                     return;
@@ -317,7 +333,9 @@ export function registerUploadWizard() {
                         .then((response) => {
                             this.syncData(response.data);
                         })
-                        .catch(() => {});
+                        .catch((error) => {
+                            this.handleRequestError(error);
+                        });
                 });
             } else if (file.status === false) {
                 const fileIndex = this.findFileIndex(file.uuid);
@@ -339,7 +357,9 @@ export function registerUploadWizard() {
                     .then(() => {
                         window.location.href = '/';
                     })
-                    .catch(() => {});
+                    .catch((error) => {
+                        this.handleRequestError(error);
+                    });
             });
         },
 
@@ -453,6 +473,9 @@ export function registerUploadWizard() {
             })
                 .then(() => {
                     this.showModal(config.invitationResent, () => {});
+                })
+                .catch((error) => {
+                    this.handleRequestError(error);
                 });
         },
 
@@ -470,6 +493,10 @@ export function registerUploadWizard() {
                         this.showModal(config.invitationRevoked, () => {});
                     })
                     .catch((error) => {
+                        if (window.isAuthFailure?.(error)) {
+                            return;
+                        }
+
                         const message = error.response?.data?.message ?? 'Request failed';
                         this.showModal(message, () => {});
                     });

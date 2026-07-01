@@ -8,6 +8,10 @@
     <div @if (! $ssoEnabled) x-data="login" @endif>
         <x-ui.page-header :title="__('app.authentication')" />
 
+        @if (session('status'))
+            <x-ui.alert variant="info" class="mb-4">{{ session('status') }}</x-ui.alert>
+        @endif
+
         @if (session('sso_error'))
             <x-ui.alert variant="danger" class="mb-4">{{ session('sso_error') }}</x-ui.alert>
         @endif
