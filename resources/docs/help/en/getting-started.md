@@ -17,10 +17,10 @@ After signing in, the homepage lists your existing bundles grouped by status (dr
 Creating a share takes three steps:
 
 1. **Settings** — Title, description, expiry, optional password, share mode, and recipients.
-2. **Files** — Drag and drop files or browse your computer. You can add more files later before completing the bundle.
+2. **Files** — Drag and drop files or browse your computer. Add or remove files while the bundle is still a draft.
 3. **Links** — After you finish, you receive preview and download links (or invitations are sent to recipients).
 
-Click **Complete** when all files are uploaded and settings look correct. Depending on your organization's policy, the bundle may be sent immediately or held for approval.
+Click **Complete** when all files are uploaded and settings look correct. Completed bundles are locked and cannot be edited. Depending on your organization's policy, the bundle may be sent immediately or held for approval.
 
 ## Tips
 

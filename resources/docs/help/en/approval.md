@@ -23,7 +23,7 @@ For each submission you can:
 - **Approve** — The bundle is published and invitations or links are sent as configured.
 - **Deny** — You must provide a reason; the uploader is notified.
 
-Review the bundle title, description, file list, and recipients before approving.
+Review the bundle title, description, file list, and recipients before approving. You can download individual files from the review page to inspect their contents while the request is pending.
 
 ## Who needs approval?
 

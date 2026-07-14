@@ -4,7 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\BundleStatus;
 use App\Enums\ShareMode;
+use App\Mail\BundleInvitationMail;
 use App\Models\Bundle;
+use App\Models\File;
+use App\Models\Group;
 use App\Models\User;
 use App\Services\SharingSettings;
 use Illuminate\Http\UploadedFile;
@@ -32,7 +35,7 @@ class UploadWorkflowTest extends TestCase
         config(['approval.required_default' => false]);
 
         $user = User::factory()->create(['requires_approval' => false]);
-        $group = \App\Models\Group::create([
+        $group = Group::create([
             'name' => 'Trusted upload',
             'slug' => 'trusted-upload',
             'requires_approval' => false,
@@ -166,7 +169,7 @@ class UploadWorkflowTest extends TestCase
         $bundle->refresh();
         $this->assertNull($bundle->preview_link);
         $this->assertDatabaseMissing('approval_requests', ['bundle_id' => $bundle->id]);
-        Mail::assertQueued(\App\Mail\BundleInvitationMail::class);
+        Mail::assertQueued(BundleInvitationMail::class);
     }
 
     public function test_owned_bundle_completion_requires_authentication(): void
@@ -394,5 +397,181 @@ class UploadWorkflowTest extends TestCase
             ], $headers)
             ->assertUnprocessable()
             ->assertJsonPath('message', __('app.file-type-blocked'));
+    }
+
+    public function test_uploading_image_generates_thumbnail_and_owner_can_fetch_it(): void
+    {
+        Storage::fake('uploads');
+        config(['approval.required_default' => false]);
+
+        $user = User::factory()->create(['requires_approval' => false]);
+        $slug = 'imgup-'.Str::lower(Str::random(8));
+        $this->slugs[] = $slug;
+
+        $bundle = Bundle::create([
+            'user_id' => $user->id,
+            'slug' => $slug,
+            'owner_token' => substr(sha1($slug.'owner'), 0, 15),
+            'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
+            'completed' => false,
+            'status' => BundleStatus::Draft,
+            'expiry' => '86400',
+            'fullsize' => 0,
+            'max_downloads' => 0,
+            'downloads' => 0,
+        ]);
+
+        $headers = [
+            'X-Upload-Auth' => $bundle->owner_token,
+            'X-Requested-With' => 'XMLHttpRequest',
+        ];
+
+        $uuid = (string) Str::uuid();
+
+        $response = $this->actingAsUser($user)
+            ->postJson("/upload/{$slug}/file", [
+                'uuid' => $uuid,
+                'file' => UploadedFile::fake()->image('photo.png', 300, 200),
+            ], $headers)
+            ->assertOk()
+            ->assertJsonPath('original', 'photo.png')
+            ->assertJsonPath('is_image', true);
+
+        $response->assertJsonStructure(['thumbnail_url']);
+        $this->assertNotEmpty($response->json('thumbnail_url'));
+
+        $file = File::where('uuid', $uuid)->firstOrFail();
+        $this->assertNotNull($file->thumbnail_path);
+        Storage::disk('uploads')->assertExists($file->thumbnail_path);
+
+        $this->actingAsUser($user)
+            ->get("/upload/{$slug}/file/{$uuid}/thumbnail?auth={$bundle->owner_token}")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/jpeg');
+
+        $this->actingAsUser($user)
+            ->deleteJson("/upload/{$slug}/file", [
+                'uuid' => $uuid,
+                'auth' => $bundle->owner_token,
+            ], $headers)
+            ->assertOk();
+
+        Storage::disk('uploads')->assertMissing($file->thumbnail_path);
+        $this->assertDatabaseMissing('files', ['uuid' => $uuid]);
+    }
+
+    public function test_guest_preview_response_omits_file_fullpath(): void
+    {
+        Storage::fake('uploads');
+        config(['approval.required_default' => false, 'sso.enabled' => true]);
+
+        $user = User::factory()->create(['requires_approval' => false]);
+        $slug = 'guestpath-'.Str::lower(Str::random(8));
+        $this->slugs[] = $slug;
+
+        $bundle = Bundle::create([
+            'user_id' => $user->id,
+            'slug' => $slug,
+            'title' => 'Guest path check',
+            'owner_token' => substr(sha1($slug.'owner'), 0, 15),
+            'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
+            'completed' => true,
+            'status' => BundleStatus::Approved,
+            'expiry' => '86400',
+            'expires_at' => now()->addDay(),
+            'fullsize' => 10,
+            'max_downloads' => 0,
+            'downloads' => 0,
+        ]);
+
+        File::create([
+            'uuid' => (string) Str::uuid(),
+            'bundle_id' => $bundle->id,
+            'original' => 'secret.txt',
+            'filesize' => 10,
+            'fullpath' => "{$slug}/secret.txt",
+            'filename' => 'secret',
+            'status' => true,
+        ]);
+
+        $this->get("/bundle/{$slug}/preview?auth={$bundle->preview_token}")
+            ->assertOk()
+            ->assertDontSee("{$slug}/secret.txt", false);
+
+        $viewer = User::factory()->create();
+
+        $this->actingAsUser($viewer)
+            ->get("/bundle/{$slug}/preview?auth={$bundle->preview_token}")
+            ->assertOk()
+            ->assertDontSee("{$slug}/secret.txt", false);
+    }
+
+    public function test_guest_preview_omits_owner_secrets_when_sso_disabled(): void
+    {
+        Storage::fake('uploads');
+        config(['approval.required_default' => false, 'sso.enabled' => false]);
+
+        $user = User::factory()->create(['requires_approval' => false]);
+        $slug = 'guestopen-'.Str::lower(Str::random(8));
+        $this->slugs[] = $slug;
+
+        $bundle = Bundle::create([
+            'user_id' => $user->id,
+            'slug' => $slug,
+            'title' => 'Open upload guest check',
+            'password' => 'bundle-secret',
+            'owner_token' => substr(sha1($slug.'owner'), 0, 15),
+            'preview_token' => substr(sha1($slug.'preview'), 0, 15),
+            'share_mode' => ShareMode::StaticLink,
+            'completed' => true,
+            'status' => BundleStatus::Approved,
+            'expiry' => '86400',
+            'expires_at' => now()->addDay(),
+            'fullsize' => 10,
+            'max_downloads' => 0,
+            'downloads' => 0,
+        ]);
+
+        File::create([
+            'uuid' => (string) Str::uuid(),
+            'bundle_id' => $bundle->id,
+            'original' => 'secret.txt',
+            'filesize' => 10,
+            'fullpath' => "{$slug}/secret.txt",
+            'filename' => 'secret',
+            'hash' => 'deadbeef',
+            'status' => true,
+        ]);
+
+        $response = $this->get("/bundle/{$slug}/preview?auth={$bundle->preview_token}")
+            ->assertOk();
+
+        $payload = $this->decodeBundlePayload($response->getContent());
+
+        $this->assertArrayNotHasKey('owner_token', $payload);
+        $this->assertArrayNotHasKey('preview_token', $payload);
+        $this->assertArrayNotHasKey('password', $payload);
+        $this->assertArrayNotHasKey('deletion_link', $payload);
+        $this->assertCount(1, $payload['files']);
+        $this->assertArrayNotHasKey('fullpath', $payload['files'][0]);
+        $this->assertArrayNotHasKey('hash', $payload['files'][0]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodeBundlePayload(string $html): array
+    {
+        $this->assertSame(1, preg_match("/window\.__bundle = JSON\.parse\('(.*)'\);/s", $html, $matches));
+
+        $json = json_decode('"'.$matches[1].'"');
+        $this->assertIsString($json);
+
+        $decoded = json_decode($json, true);
+        $this->assertIsArray($decoded);
+
+        return $decoded;
     }
 }

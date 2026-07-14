@@ -35,7 +35,7 @@ class OwnerAccess
         abort_if(empty($auth), 403);
 
         // Aborting if owner token is wrong
-        abort_if($bundle->owner_token !== $auth, 403);
+        abort_if(! hash_equals((string) $bundle->owner_token, (string) $auth), 403);
 
         return $next($request);
     }

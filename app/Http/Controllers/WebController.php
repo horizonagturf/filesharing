@@ -101,9 +101,14 @@ class WebController extends Controller
                 'user' => $user,
             ]);
 
+            $request->attributes->set('bundle_owner_access', true);
+
             return response()->json([
                 'result' => true,
-                'redirect' => route('upload.create.show', ['bundle' => $bundle->slug]),
+                'redirect' => route('upload.create.show', [
+                    'bundle' => $bundle->slug,
+                    'auth' => $bundle->owner_token,
+                ]),
                 'bundle' => new BundleResource($bundle),
             ]);
         } catch (Exception $e) {

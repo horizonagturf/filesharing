@@ -11,6 +11,8 @@ use App\Models\BundleRecipient;
 use App\Models\File;
 use App\Services\BundleApprovalService;
 use App\Services\BundleInvitationService;
+use App\Services\BundleOwnerAccess;
+use App\Services\ImageThumbnailService;
 use App\Services\OtpPolicy;
 use App\Services\ShareModePolicy;
 use App\Services\SharingSettings;
@@ -19,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Response;
 
 class UploadController extends Controller
 {
@@ -28,10 +31,13 @@ class UploadController extends Controller
         private readonly ShareModePolicy $shareModePolicy,
         private readonly OtpPolicy $otpPolicy,
         private readonly SharingSettings $sharingSettings,
+        private readonly ImageThumbnailService $thumbnailService,
     ) {}
 
     public function createBundle(Request $request, Bundle $bundle)
     {
+        abort_unless(BundleOwnerAccess::isOwner($request, $bundle), 403);
+
         $bundle->load('recipients');
 
         return view('upload', [
@@ -157,7 +163,10 @@ class UploadController extends Controller
                 'status' => true,
                 'hash' => $hash ?? null,
             ]);
+            $file->setRelation('bundle', $bundle);
+            $file->thumbnail_path = $this->thumbnailService->generate($file);
             $file->save();
+            $this->invalidateCachedZip($bundle);
 
             return response()->json(new FileResource($file));
         } catch (Exception $e) {
@@ -184,12 +193,15 @@ class UploadController extends Controller
 
         try {
             // Physically deleting the file
+            $this->thumbnailService->delete($file->thumbnail_path);
+
             if (! Storage::disk('uploads')->delete($file->fullpath)) {
                 throw new Exception('Cannot delete file from disk');
             }
 
             // Destroying the model
             $file->delete();
+            $this->invalidateCachedZip($bundle);
 
             return response()->json(new BundleResource($bundle));
         } catch (Exception $e) {
@@ -200,6 +212,21 @@ class UploadController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function thumbnail(Request $request, Bundle $bundle, File $file): Response
+    {
+        abort_unless($file->bundle_id === $bundle->id, 404);
+
+        $auth = $request->query('auth');
+        $isOwnerToken = is_string($auth) && $auth !== '' && hash_equals($bundle->owner_token, $auth);
+        $isLoggedInOwner = Auth::check()
+            && $bundle->user_id !== null
+            && Auth::id() === $bundle->user_id;
+
+        abort_unless($isOwnerToken || $isLoggedInOwner, 403);
+
+        return $this->thumbnailService->streamResponse($file);
     }
 
     public function completeBundle(Request $request, Bundle $bundle)
@@ -229,26 +256,22 @@ class UploadController extends Controller
         }
     }
 
-    /**
-     * In this method, we do not delete files
-     * physically to spare some time and ressources.
-     * We invalidate the expiry date and let the CRON
-     * task do the hard work
-     */
     public function deleteBundle(Request $request, Bundle $bundle)
     {
-
         try {
-            // Forcing bundle to expire
-            $bundle->expires_at = now()->subDays(30);
-            $bundle->save();
+            $uploads = Storage::disk('uploads');
 
-            // Then deleting file models
+            if ($uploads->exists($bundle->slug) && ! $uploads->deleteDirectory($bundle->slug)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete bundle files from disk',
+                ], 500);
+            }
+
             foreach ($bundle->files as $f) {
                 $f->delete();
             }
 
-            // Finally deleting bundle
             $bundle->delete();
 
             return response()->json([
@@ -291,5 +314,10 @@ class UploadController extends Controller
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
+    }
+
+    private function invalidateCachedZip(Bundle $bundle): void
+    {
+        Storage::disk('uploads')->delete($bundle->slug.'/bundle.zip');
     }
 }

@@ -2,9 +2,10 @@
 
 namespace App\Http\Resources;
 
-use App\Helpers\Upload;
 use App\Services\ApprovalPolicy;
 use App\Services\BundleInvitationService;
+use App\Services\BundleOwnerAccess;
+use App\Services\BundlePasswordAccess;
 use App\Services\OtpPolicy;
 use App\Services\ShareModePolicy;
 use Illuminate\Http\Request;
@@ -24,10 +25,13 @@ class BundleResource extends JsonResource
         /**
         Do not return private data on the preview page
          */
-        $full = false;
-        if (Auth::check() || Upload::canUpload($request->ip())) {
-            $full = true;
-        }
+        $guestPreview = (bool) $request->attributes->get('bundle_guest_preview');
+
+        $full = ! $guestPreview && BundleOwnerAccess::isOwner($request, $this->resource);
+
+        $fileContext = $full
+            ? FileResource::CONTEXT_OWNER
+            : FileResource::CONTEXT_GUEST;
 
         $invitationService = app(BundleInvitationService::class);
         $invitationMode = $invitationService->usesInvitationMode($this->resource);
@@ -39,7 +43,7 @@ class BundleResource extends JsonResource
             $guestPreviewLink = route('bundle.preview', ['bundle' => $this->resource]);
             $guestDownloadLink = route('bundle.zip.download', ['bundle' => $this->resource]);
 
-            if ($request->attributes->get('bundle_guest_preview') || ! $full) {
+            if ($guestPreview || ! $full) {
                 $previewLink = $guestPreviewLink;
                 $downloadLink = $guestDownloadLink;
             } else {
@@ -62,7 +66,11 @@ class BundleResource extends JsonResource
             'description_html' => ! empty($this->description) ? Str::markdown($this->description) : null,
             'max_downloads' => (int) $this->max_downloads,
             'downloads' => (int) $this->downloads,
-            'files' => FileResource::collection($this->files),
+            'files' => $this->files->map(function ($file) use ($fileContext) {
+                $file->setRelation('bundle', $this->resource);
+
+                return (new FileResource($file))->context($fileContext);
+            })->values(),
             'preview_link' => $previewLink,
             'download_link' => $downloadLink,
             'invitation_mode' => $invitationMode,
@@ -92,6 +100,17 @@ class BundleResource extends JsonResource
             'is_editable' => $this->when($full === true, $this->isEditable()),
             'user' => $this->when($full === true, new UserResource($this->user)),
         ];
+
+        if ($guestPreview || ! $full) {
+            $unlockParams = ['bundle' => $this->resource];
+            if ($request->query('auth')) {
+                $unlockParams['auth'] = $request->query('auth');
+            }
+
+            $response['password_required'] = BundlePasswordAccess::requiresPassword($this->resource);
+            $response['password_unlocked'] = BundlePasswordAccess::isUnlocked($this->resource);
+            $response['unlock_url'] = route('bundle.unlock', $unlockParams);
+        }
 
         return $response;
     }

@@ -41,7 +41,14 @@
                         <div class="absolute inset-y-0 left-0 bg-primary/20 transition-all" :style="'width: ' + (f.progress || 0) + '%;'"></div>
 
                         <div class="relative flex w-full items-center gap-2">
-                            <span class="w-5 shrink-0">
+                            <template x-if="f.preview_url || thumbnailSrc(f)">
+                                <img
+                                    :src="f.preview_url || thumbnailSrc(f)"
+                                    :alt="f.original"
+                                    class="h-10 w-10 shrink-0 rounded object-cover ring-1 ring-gray-200"
+                                />
+                            </template>
+                            <span class="w-5 shrink-0" x-show="! f.preview_url && ! thumbnailSrc(f)">
                                 <template x-if="f.status === true">
                                     <x-ui.icon name="check-circle" class="h-4 w-4 text-green-600" />
                                 </template>

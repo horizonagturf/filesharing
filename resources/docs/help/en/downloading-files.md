@@ -12,26 +12,24 @@ The preview page shows:
 - Number of files and total size
 - A list of each file with its size
 
-If the bundle has expired, a warning appears at the top and downloads are disabled.
-
 ## Download options
 
 - **Download all** — Downloads every file in the bundle as a single ZIP archive.
-- **Individual files** — Download specific files from the list.
+- **Individual files** — Download a specific file from the list on the preview page. Individual downloads are only available when the bundle has no download limit.
 
-## Password-protected ZIP
+## Password-protected bundles
 
-If the sender set a password on the bundle, the ZIP download is encrypted. You need the password they provided (separately from the link) to open the archive.
+If the sender set a password on the bundle, you must enter it on the preview page before you can download files. The ZIP archive is also encrypted with that password, so you need it again to open the archive after downloading.
 
-## Download limits
+## Download limits and expiry
 
-Some bundles have a maximum number of downloads. If the limit is reached, further downloads are blocked. Contact the sender if you need a new copy.
+Some bundles have a maximum number of downloads or an expiry date. The download limit applies to full ZIP downloads. If the limit is reached or the share has expired, you see an unavailable page instead of the preview. Contact the sender if you need a new copy.
 
 ## Direct download link
 
 Senders may give you two types of links:
 
-- **Preview link** — Opens the preview page where you can browse and choose what to download.
-- **Direct download link** — Starts the ZIP download immediately without showing the preview page.
+- **Preview link** — Opens the preview page where you can browse files and download all or individual files.
+- **Direct download link** — Starts the ZIP download immediately without showing the preview page. If the bundle is password-protected and you have not unlocked it yet, you are sent to the preview page to enter the password first.
 
 Both links use the same authorization and respect the same expiry and download limits.

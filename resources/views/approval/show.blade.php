@@ -47,13 +47,52 @@
                     <h3 class="mb-2 text-sm font-semibold text-gray-900">@lang('app.files-list')</h3>
                     <ul class="divide-y divide-gray-100 rounded-lg ring-1 ring-gray-950/5">
                         @foreach ($approvalRequest->bundle->files as $file)
-                            <li class="flex items-center justify-between px-4 py-2 text-sm">
-                                <span class="truncate text-gray-900">{{ $file->original }}</span>
-                                <span class="ml-4 shrink-0 text-gray-500">{{ number_format($file->filesize / 1000000, 1) }} MB</span>
+                            <li class="flex items-center justify-between gap-3 px-4 py-2 text-sm">
+                                <div class="flex min-w-0 items-center gap-3">
+                                    @if (\App\Helpers\Upload::isImageFilename((string) $file->original) && $file->thumbnail_path)
+                                        <img
+                                            src="{{ route('approval.file.thumbnail', ['approvalRequest' => $approvalRequest, 'file' => $file]) }}"
+                                            alt="{{ $file->original }}"
+                                            class="h-12 w-12 shrink-0 rounded object-cover ring-1 ring-gray-200"
+                                        />
+                                    @endif
+                                    <span class="truncate text-gray-900">{{ $file->original }}</span>
+                                </div>
+                                <div class="ml-4 flex shrink-0 items-center gap-3">
+                                    <span class="text-gray-500">{{ number_format($file->filesize / 1000000, 1) }} MB</span>
+                                    <a
+                                        href="{{ route('approval.file.download', ['approvalRequest' => $approvalRequest, 'file' => $file]) }}"
+                                        class="font-medium text-primary hover:underline"
+                                    >
+                                        @lang('app.download')
+                                    </a>
+                                </div>
                             </li>
                         @endforeach
                     </ul>
                 </div>
+
+                @if ($approvalRequest->bundle->recipients->isNotEmpty())
+                    <div>
+                        <h3 class="mb-2 text-sm font-semibold text-gray-900">@lang('invitation.recipients')</h3>
+                        <ul class="divide-y divide-gray-100 rounded-lg ring-1 ring-gray-950/5">
+                            @foreach ($approvalRequest->bundle->recipients as $recipient)
+                                <li class="flex items-center justify-between gap-3 px-4 py-2 text-sm">
+                                    <span class="truncate text-gray-900">{{ $recipient->email }}</span>
+                                    <span class="shrink-0 text-gray-500">
+                                        @if ($recipient->isRevoked())
+                                            @lang('invitation.recipient-revoked')
+                                        @elseif ($recipient->isVerified())
+                                            @lang('invitation.recipient-verified')
+                                        @else
+                                            @lang('invitation.recipient-pending')
+                                        @endif
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
             </div>
 
             <div class="space-y-4">

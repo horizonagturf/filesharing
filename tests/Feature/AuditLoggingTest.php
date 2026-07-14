@@ -7,12 +7,14 @@ use App\Enums\AuditEvent;
 use App\Enums\BundleStatus;
 use App\Enums\ShareMode;
 use App\Filament\Resources\AuditLogResource\Pages\ListAuditLogs;
+use App\Mail\BundleOtpMail;
 use App\Models\ApprovalRequest;
 use App\Models\AuditLog;
 use App\Models\Bundle;
 use App\Models\BundleRecipient;
 use App\Models\File;
 use App\Models\User;
+use App\Services\BundleAdminService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -173,7 +175,7 @@ class AuditLoggingTest extends TestCase
             'recipient_email' => 'recipient@example.com',
         ]);
 
-        $code = Mail::queued(\App\Mail\BundleOtpMail::class)->first()->code;
+        $code = Mail::queued(BundleOtpMail::class)->first()->code;
 
         $signedVerify = URL::temporarySignedRoute('invitation.otp.verify', now()->addHour(), [
             'bundle' => $bundle,
@@ -241,7 +243,7 @@ class AuditLoggingTest extends TestCase
 
         $this->actingAsUser($admin);
 
-        app(\App\Services\BundleAdminService::class)->revoke($bundle);
+        app(BundleAdminService::class)->revoke($bundle);
 
         $this->assertDatabaseHas('audit_logs', [
             'event_type' => AuditEvent::AdminBundleRevoked->value,
@@ -486,7 +488,7 @@ class AuditLoggingTest extends TestCase
         ]);
 
         $this->get("/bundle/{$bundle->slug}/preview?auth={$bundle->preview_token}")
-            ->assertNotFound();
+            ->assertStatus(410);
 
         $log = AuditLog::query()
             ->where('event_type', AuditEvent::AccessDenied->value)
@@ -542,7 +544,7 @@ class AuditLoggingTest extends TestCase
         ]);
 
         $this->get("/bundle/{$bundle->slug}/preview?auth={$bundle->preview_token}")
-            ->assertNotFound();
+            ->assertStatus(410);
 
         $log = AuditLog::query()
             ->where('event_type', AuditEvent::AccessDenied->value)

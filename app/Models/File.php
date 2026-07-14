@@ -17,6 +17,7 @@ class File extends Model
         'filename',
         'status',
         'hash',
+        'thumbnail_path',
     ];
 
     protected function casts(): array

@@ -1,6 +1,6 @@
 {
-  "_dayjs-config-GfN9pr07.js": {
-    "file": "assets/dayjs-config-GfN9pr07.js",
+  "_dayjs-config-Cy_8dFvx.js": {
+    "file": "assets/dayjs-config-Cy_8dFvx.js",
     "name": "dayjs-config"
   },
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2": {
@@ -20,7 +20,7 @@
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-C-Xpv6FD.css",
+    "file": "assets/app-DMkLAyeZ.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -29,21 +29,21 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CqzsEz8V.js",
+    "file": "assets/app-D3vpt0aj.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_dayjs-config-GfN9pr07.js"
+      "_dayjs-config-Cy_8dFvx.js"
     ]
   },
   "resources/js/upload.js": {
-    "file": "assets/upload-DKd4txQO.js",
+    "file": "assets/upload-GkfTmjsY.js",
     "name": "upload",
     "src": "resources/js/upload.js",
     "isEntry": true,
     "imports": [
-      "_dayjs-config-GfN9pr07.js"
+      "_dayjs-config-Cy_8dFvx.js"
     ],
     "css": [
       "assets/upload-DIpg9LUt.css"

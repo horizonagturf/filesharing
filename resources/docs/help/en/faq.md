@@ -23,7 +23,7 @@ Sessions expire after a period of inactivity. Sign in again to continue. This pr
 
 ## What is the difference between preview and download links?
 
-The **preview link** opens a page where you can browse files and choose downloads. The **download link** starts a ZIP download directly. Both require the same authorization.
+The **preview link** opens a page where you can browse files and download all files as a ZIP or individual files. The **download link** starts a ZIP download directly. Both require the same authorization.
 
 ## Can I disable OTP for my bundle?
 

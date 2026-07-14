@@ -19,7 +19,6 @@ Both links share the same authorization code. A scheduled background task remove
 - **Admin panel** (`/admin`) — users, groups, bundles, branding, sharing defaults, audit log
 - **bundle settings**: title, description, expiration date, max downloads, password
 - upload one or more files via drag and drop or filesystem browse
-- ability to keep adding files to a bundle days later
 - sharing link with bundle content preview
 - download rate limiter
 - ability to download the entire bundle as ZIP archive (password protected when applicable)

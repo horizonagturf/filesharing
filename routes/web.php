@@ -34,6 +34,7 @@ Route::middleware(['can.upload'])->group(function () {
 
     Route::prefix('/upload/{bundle}')->name('upload.')->group(function () {
         Route::get('/', [UploadController::class, 'createBundle'])->name('create.show');
+        Route::get('/file/{file}/thumbnail', [UploadController::class, 'thumbnail'])->name('file.thumbnail');
 
         Route::middleware(['access.owner'])->group(function () {
             Route::post('/', [UploadController::class, 'storeBundle'])->name('create.store');
@@ -56,6 +57,8 @@ Route::middleware(['signed'])->prefix('/invitation/{bundle}/{recipient}')->name(
 Route::middleware(['auth', 'role:reviewer'])->prefix('/approval')->name('approval.')->group(function () {
     Route::get('/', [ApprovalController::class, 'index'])->name('index');
     Route::get('/{approvalRequest}', [ApprovalController::class, 'show'])->name('show');
+    Route::get('/{approvalRequest}/file/{file}/thumbnail', [ApprovalController::class, 'thumbnail'])->name('file.thumbnail');
+    Route::get('/{approvalRequest}/file/{file}/download', [ApprovalController::class, 'downloadFile'])->name('file.download');
     Route::post('/{approvalRequest}/approve', [ApprovalController::class, 'approve'])->name('approve');
     Route::post('/{approvalRequest}/deny', [ApprovalController::class, 'deny'])->name('deny');
 });
@@ -63,4 +66,7 @@ Route::middleware(['auth', 'role:reviewer'])->prefix('/approval')->name('approva
 Route::middleware(['access.guest', 'throttle:download'])->prefix('/bundle/{bundle}')->name('bundle.')->group(function () {
     Route::get('/preview', [BundleController::class, 'previewBundle'])->name('preview');
     Route::get('/download', [BundleController::class, 'downloadZip'])->name('zip.download');
+    Route::post('/unlock', [BundleController::class, 'unlock'])->name('unlock');
+    Route::get('/file/{file}/thumbnail', [BundleController::class, 'thumbnail'])->name('file.thumbnail');
+    Route::get('/file/{file}/download', [BundleController::class, 'downloadFile'])->name('file.download');
 });

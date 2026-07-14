@@ -307,4 +307,17 @@ class Upload
 
         return false;
     }
+
+    public static function isImageFilename(string $filename): bool
+    {
+        $imageExtensions = array_flip(['jpg', 'jpeg', 'png', 'gif', 'webp']);
+
+        foreach (self::filenameExtensions($filename) as $extension) {
+            if (isset($imageExtensions[$extension])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

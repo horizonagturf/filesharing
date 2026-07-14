@@ -3,15 +3,16 @@ export function registerAlpineComponents() {
         metadata: window.__bundle ?? {},
         created_at: null,
         expires_at: null,
-        expired: false,
-        interval: null,
+        password: '',
+        unlocking: false,
+        unlockError: null,
 
         init() {
             this.updateTimes();
+        },
 
-            this.interval = window.setInterval(() => {
-                this.updateTimes();
-            }, 5000);
+        get downloadsUnlocked() {
+            return ! this.metadata.password_required || this.metadata.password_unlocked;
         },
 
         parseExpiresAt(expiresAt) {
@@ -27,22 +28,9 @@ export function registerAlpineComponents() {
             this.created_at = dayjs(this.metadata.created_at).fromNow();
 
             if (this.metadata.expiry) {
-                if (! this.isExpired()) {
-                    const expiresAt = this.parseExpiresAt(this.metadata.expires_at);
-                    this.expires_at = expiresAt != null && expiresAt.isValid() ? expiresAt.fromNow() : null;
-                }
+                const expiresAt = this.parseExpiresAt(this.metadata.expires_at);
+                this.expires_at = expiresAt != null && expiresAt.isValid() ? expiresAt.fromNow() : null;
             }
-        },
-
-        isExpired() {
-            const expiresAt = this.parseExpiresAt(this.metadata.expires_at);
-            if (expiresAt == null || ! expiresAt.isValid()) {
-                this.expired = false;
-                return false;
-            }
-
-            this.expired = dayjs().isAfter(expiresAt);
-            return this.expired;
         },
 
         humanSize(val) {
@@ -60,7 +48,44 @@ export function registerAlpineComponents() {
         },
 
         downloadAll() {
+            if (! this.downloadsUnlocked) {
+                return;
+            }
+
             window.location.href = this.metadata.download_link;
+        },
+
+        downloadFile(file) {
+            if (! this.downloadsUnlocked || ! file?.download_url) {
+                return;
+            }
+
+            window.location.href = file.download_url;
+        },
+
+        unlock() {
+            if (! this.metadata.unlock_url || this.unlocking) {
+                return;
+            }
+
+            this.unlocking = true;
+            this.unlockError = null;
+
+            axios.post(this.metadata.unlock_url, { password: this.password })
+                .then((response) => {
+                    if (response.data?.result === true) {
+                        this.metadata.password_unlocked = true;
+                        this.password = '';
+                    }
+                })
+                .catch((error) => {
+                    this.unlockError = error.response?.data?.message
+                        || window.__bundlePasswordIncorrect
+                        || 'Incorrect password';
+                })
+                .finally(() => {
+                    this.unlocking = false;
+                });
         },
     }));
 }

@@ -25,12 +25,12 @@ If OTP was not required for this bundle, clicking the invitation link takes you 
 Once verified (or if OTP was skipped), you can:
 
 - **Preview** the bundle — see the list of files, sizes, and expiry information.
-- **Download all** as a ZIP archive, or download individual files.
+- **Download all** as a ZIP archive, or download individual files from the list.
 
 You cannot access files until you have completed the invitation step. Do not share your invitation link with others unless the sender intended a group download.
 
 ## Expired or unavailable bundles
 
-If a bundle has expired or reached its download limit, the preview page shows a warning and downloads are disabled. Contact the person who shared the files if you still need access.
+If a bundle has expired or reached its download limit, you see an unavailable page instead of the file preview. Contact the person who shared the files if you still need access.
 
 See [Downloading files](/help/downloading-files) for more detail on preview and download options.

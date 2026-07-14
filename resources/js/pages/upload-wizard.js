@@ -262,7 +262,7 @@ export function registerUploadWizard() {
             this.dropzone.on('addedfile', (file) => {
                 file.uuid = this.uuid();
 
-                this.bundle.files.unshift({
+                const entry = {
                     uuid: file.uuid,
                     original: file.name,
                     filesize: file.size,
@@ -270,7 +270,17 @@ export function registerUploadWizard() {
                     filename: file.name,
                     created_at: dayjs().unix(),
                     status: 'uploading',
-                });
+                    preview_url: null,
+                    thumbnail_url: null,
+                    is_image: false,
+                };
+
+                if (file.type && file.type.startsWith('image/')) {
+                    entry.preview_url = URL.createObjectURL(file);
+                    entry.is_image = true;
+                }
+
+                this.bundle.files.unshift(entry);
             });
 
             this.dropzone.on('sending', (file, xhr, formData) => {
@@ -304,6 +314,24 @@ export function registerUploadWizard() {
                 this.bundle.files[fileIndex].message = message?.message ?? message;
             });
 
+            this.dropzone.on('success', (file, response) => {
+                const fileIndex = this.findFileIndex(file.uuid);
+                if (fileIndex === null) {
+                    return;
+                }
+
+                const data = response?.data ?? response;
+                this.revokePreviewUrl(this.bundle.files[fileIndex]);
+
+                this.bundle.files[fileIndex] = {
+                    ...this.bundle.files[fileIndex],
+                    ...data,
+                    preview_url: null,
+                    status: true,
+                    progress: 0,
+                };
+            });
+
             this.dropzone.on('complete', (file) => {
                 const fileIndex = this.findFileIndex(file.uuid);
                 if (fileIndex === null) {
@@ -319,6 +347,31 @@ export function registerUploadWizard() {
             });
         },
 
+        thumbnailSrc(file) {
+            if (! file?.thumbnail_url) {
+                return null;
+            }
+
+            if (! this.bundle?.owner_token) {
+                return file.thumbnail_url;
+            }
+
+            if (file.thumbnail_url.includes('auth=')) {
+                return file.thumbnail_url;
+            }
+
+            const separator = file.thumbnail_url.includes('?') ? '&' : '?';
+
+            return `${file.thumbnail_url}${separator}auth=${encodeURIComponent(this.bundle.owner_token)}`;
+        },
+
+        revokePreviewUrl(file) {
+            if (file?.preview_url) {
+                URL.revokeObjectURL(file.preview_url);
+                file.preview_url = null;
+            }
+        },
+
         deleteFile(file) {
             if (file.status === true) {
                 this.showModal(config.confirmDelete, () => {
@@ -331,6 +384,7 @@ export function registerUploadWizard() {
                         },
                     })
                         .then((response) => {
+                            this.revokePreviewUrl(file);
                             this.syncData(response.data);
                         })
                         .catch((error) => {
@@ -340,6 +394,7 @@ export function registerUploadWizard() {
             } else if (file.status === false) {
                 const fileIndex = this.findFileIndex(file.uuid);
                 if (fileIndex !== null) {
+                    this.revokePreviewUrl(this.bundle.files[fileIndex]);
                     this.bundle.files.splice(fileIndex, 1);
                 }
             }

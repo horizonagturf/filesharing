@@ -36,16 +36,16 @@ class GuestAccess
 
         if (! empty($bundle->expires_at)) {
             if ($bundle->expires_at->isBefore(Carbon::now())) {
-                Audit::denied($bundle, 'bundle_expired', 404);
+                Audit::denied($bundle, 'bundle_expired', 410);
 
-                abort(404);
+                return $this->unavailableResponse('expired');
             }
         }
 
         if (($bundle->max_downloads ?? 0) > 0 && $bundle->downloads >= $bundle->max_downloads) {
-            Audit::denied($bundle, 'max_downloads_exceeded', 404);
+            Audit::denied($bundle, 'max_downloads_exceeded', 410);
 
-            abort(404);
+            return $this->unavailableResponse('max_downloads');
         }
 
         if ($this->invitationService->usesInvitationMode($bundle)
@@ -65,12 +65,19 @@ class GuestAccess
             abort(403);
         }
 
-        if ($bundle->preview_token !== $request->auth) {
+        if (! hash_equals((string) $bundle->preview_token, (string) $request->auth)) {
             Audit::denied($bundle, 'invalid_auth_token', 403);
 
             abort(403);
         }
 
         return $next($request);
+    }
+
+    private function unavailableResponse(string $reason): Response
+    {
+        return response()->view('bundle.unavailable', [
+            'reason' => $reason,
+        ], 410);
     }
 }

@@ -13,6 +13,7 @@ use App\Models\Bundle;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 
 class BundleApprovalService
@@ -131,6 +132,8 @@ class BundleApprovalService
             $bundle->preview_link = null;
             $bundle->download_link = null;
             $bundle->save();
+
+            Storage::disk('uploads')->delete($bundle->slug.'/bundle.zip');
 
             if ($bundle->user?->email) {
                 Mail::to($bundle->user->email)->queue(new BundleDeniedMail($bundle, $reason));
