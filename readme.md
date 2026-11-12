@@ -23,7 +23,7 @@ Both links share the same authorization code. A scheduled background task remove
 - download rate limiter
 - ability to download the entire bundle as ZIP archive (password protected when applicable)
 - direct download link (no preview)
-- garbage collector removes expired bundles on a schedule
+- garbage collector removes expired bundles, abandoned drafts and old denied bundles on a schedule
 - multilingual (EN, FR, DE and KR)
 - secured by tokens, authentication codes and non-publicly-accessible files
 
@@ -59,7 +59,7 @@ Complete runbook for IT admins deploying to staging or production. Goal: another
 
 Before you start, confirm:
 
-- [ ] HTTPS host and reverse proxy configured
+- [ ] HTTPS host and reverse proxy configured, and the proxy's IP set in `TRUSTED_PROXIES`
 - [ ] MySQL/MariaDB available (`utf8mb4` / `utf8mb4_unicode_ci`)
 - [ ] Outbound SMTP tested (internal and external recipients)
 - [ ] Entra ID app registration planned (single tenant)
@@ -123,6 +123,7 @@ Also ensure `APP_URL` matches the URL users visit and leave `UPLOAD_LIMIT_IPS` e
 | Variable | Default | Purpose |
 | -------- | ------- | ------- |
 | `APPROVAL_REQUIRED_DEFAULT` | `false` | Fallback when user has no override and no group requires approval |
+| `APPROVAL_REQUIRED_ANONYMOUS` | `false` | Require approval for bundles uploaded without signing in (SSO off, IP allowlisted) |
 | `DEFAULT_SHARE_MODE` | `invitation` | `invitation` or `static_link` for new bundles |
 | `AZURE_ALLOWED_DOMAINS` | — | Comma-separated allowed email domains |
 | `INVITATION_REQUIRE_OTP` | `true` | Enforce OTP for invitation bundles; only groups with "Allow invitation without OTP" can turn it off |
@@ -137,6 +138,8 @@ Also ensure `APP_URL` matches the URL users visit and leave `UPLOAD_LIMIT_IPS` e
 | `SESSION_IDLE_TIMEOUT` | `60` | Minutes of inactivity before logout |
 | `OAUTH_RATE_LIMIT_PER_MINUTE` | `10` | Microsoft OAuth callback throttle |
 | `DOWNLOAD_RATE_LIMIT_PER_MINUTE` | `30` | Bundle preview/download throttle |
+| `LOGIN_RATE_LIMIT_PER_MINUTE` | `5` | Password login attempts per username per IP (each IP also gets 4× this across usernames) |
+| `TRUSTED_PROXIES` | _(empty)_ | IPs/CIDRs of your reverse proxy or load balancer, e.g. `10.0.0.5` or `10.0.0.0/24`. **Required when behind a proxy**, otherwise every user appears to come from the proxy's IP (shared rate limits, wrong audit IPs, IP upload allowlist checks the proxy) |
 | `OTP_RATE_LIMIT_PER_HOUR` | `5` | OTP requests per recipient email |
 | `OTP_ROUTE_RATE_LIMIT_PER_HOUR` | `30` | OTP route HTTP throttle |
 | `AUDIT_RETENTION_DAYS` | `365` | Audit log retention (`0` = keep forever) |
@@ -152,6 +155,9 @@ Also ensure `APP_URL` matches the URL users visit and leave `UPLOAD_LIMIT_IPS` e
 | `UPLOAD_BLOCKED_EXTENSIONS` | Comma-separated blocked extensions (no dots); unset uses built-in default; overridable in admin Sharing settings |
 | `HASH_MAX_FILESIZE` | Max size to hash for dedup checks |
 | `LIMIT_DOWNLOAD_RATE` | Download throttle (e.g. `100K`, `1M`) |
+| `DRAFT_RETENTION_HOURS` | Delete bundles never completed after this many hours of no activity (default `72`, `0` = keep) |
+| `DENIED_RETENTION_DAYS` | Delete denied bundles not resubmitted after this many days (default `14`, `0` = keep) |
+| `SHARING_ALLOW_FOREVER` | Let uploaders pick "forever" (no expiry). Set `false` to force every share to expire (default `true`) |
 | `UPLOAD_LIMIT_IPS` | IP whitelist when SSO disabled; **ignored when SSO enabled** |
 
 See also [Configuration](#configuration) for locale, timezone, and other app settings.
@@ -265,7 +271,9 @@ Each group controls two policies:
 2. Any group the user belongs to with `requires_approval=true` — requires approval
 3. Else `APPROVAL_REQUIRED_DEFAULT` env fallback
 
-When approval is required, the bundle enters `pending_approval` status. Users in the **reviewer pool** (anyone with the `reviewer` role) are emailed and can approve or deny at `/approval`.
+The policy is evaluated for the **bundle's owner**, not whoever is signed in when the bundle is completed. Bundles uploaded without signing in (SSO off, IP allowlisted) have no owner and follow `APPROVAL_REQUIRED_ANONYMOUS` instead.
+
+When approval is required, the bundle enters `pending_approval` status. Users in the **reviewer pool** (anyone with the `reviewer` role) are emailed and can approve or deny at `/approval`. Nobody can review their own bundle, admins included, so make sure at least two people hold the `reviewer` role.
 
 **Operator tasks:**
 

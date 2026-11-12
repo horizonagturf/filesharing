@@ -74,8 +74,10 @@ export function registerAlpineComponents() {
             axios.post(this.metadata.unlock_url, { password: this.password })
                 .then((response) => {
                     if (response.data?.result === true) {
-                        this.metadata.password_unlocked = true;
+                        // File list and description are only sent once unlocked,
+                        // so reload to fetch them.
                         this.password = '';
+                        window.location.reload();
                     }
                 })
                 .catch((error) => {

@@ -66,6 +66,9 @@ class BundleController extends Controller
     {
         abort_unless($file->bundle_id === $bundle->id, 404);
 
+        // Thumbnails reveal file contents, so they stay behind the bundle password.
+        abort_unless(BundlePasswordAccess::isUnlocked($bundle), 403);
+
         return $this->thumbnailService->streamResponse($file);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\BrandingSettings;
 use App\Services\SystemHealth;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Symfony\Component\Mime\Address;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +38,26 @@ class AppServiceProvider extends ServiceProvider
                 ->by($request->ip());
         });
 
+        RateLimiter::for('login', function (Request $request) {
+            $perAccount = max(1, config('security.login_rate_limit_per_minute', 5));
+            $username = Str::lower(trim((string) $request->input('login')));
+            $tooMany = fn (Request $request, array $headers) => response()->json([
+                'result' => false,
+                'message' => __('auth.throttle', [
+                    'seconds' => $headers['Retry-After'] ?? 60,
+                ]),
+            ], 429, $headers);
+
+            return [
+                Limit::perMinute($perAccount)
+                    ->by('login:'.$username.'|'.$request->ip())
+                    ->response($tooMany),
+                Limit::perMinute($perAccount * 4)
+                    ->by('login-ip:'.$request->ip())
+                    ->response($tooMany),
+            ];
+        });
+
         RateLimiter::for('download', function (Request $request) {
             return Limit::perMinute(config('security.download_rate_limit_per_minute', 30))
                 ->by($request->ip());
@@ -42,6 +66,27 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('otp', function (Request $request) {
             return Limit::perHour(config('security.otp_route_rate_limit_per_hour', 30))
                 ->by($request->ip());
+        });
+
+        // Admin-configurable sender identity (Branding settings) overrides env defaults.
+        Event::listen(MessageSending::class, function (MessageSending $event): void {
+            try {
+                $branding = app(BrandingSettings::class);
+                $name = $branding->mailFromName();
+                $address = $branding->mailFromAddress();
+            } catch (Throwable) {
+                return;
+            }
+
+            if ($name === null && $address === null) {
+                return;
+            }
+
+            $current = $event->message->getFrom()[0] ?? null;
+            $event->message->from(new Address(
+                $address ?? $current?->getAddress() ?? config('mail.from.address'),
+                $name ?? $current?->getName() ?? (string) config('mail.from.name'),
+            ));
         });
 
         $this->registerMailLogging();

@@ -41,6 +41,9 @@ class Bundle extends Model
             'status' => BundleStatus::class,
             'share_mode' => ShareMode::class,
             'require_otp' => 'boolean',
+            // Encrypted at rest with APP_KEY. Not hashed: the plain value is
+            // needed to build the AES-encrypted ZIP and to show it to the owner.
+            'password' => 'encrypted',
             'expires_at' => 'datetime',
             'fullsize' => 'integer',
             'max_downloads' => 'integer',

@@ -30,6 +30,17 @@ class ApprovalRequest extends Model
         return $this->belongsTo(Bundle::class);
     }
 
+    /**
+     * Display name of whoever submitted the bundle; anonymous uploads have
+     * no requester.
+     */
+    public function requesterName(): string
+    {
+        return $this->requester?->name
+            ?? $this->requester?->username
+            ?? __('approval.anonymous-uploader');
+    }
+
     public function requester(): BelongsTo
     {
         return $this->belongsTo(User::class, 'requested_by');

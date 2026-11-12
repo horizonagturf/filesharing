@@ -24,9 +24,14 @@ class ApprovalController extends Controller
 
     public function index()
     {
+        $reviewerId = request()->user()->id;
+
+        // Reviewers never see their own bundles in the queue.
         $requests = ApprovalRequest::query()
             ->with(['bundle.files', 'bundle.user', 'requester'])
             ->where('status', 'pending')
+            ->where(fn ($query) => $query->whereNull('requested_by')->orWhere('requested_by', '!=', $reviewerId))
+            ->whereDoesntHave('bundle', fn ($query) => $query->where('user_id', $reviewerId))
             ->orderBy('created_at')
             ->get();
 
@@ -38,6 +43,7 @@ class ApprovalController extends Controller
     public function show(ApprovalRequest $approvalRequest)
     {
         abort_unless($approvalRequest->isPending(), 404);
+        abort_if($this->approvalService->isOwnRequest($approvalRequest, request()->user()), 403, __('approval.cannot-review-own'));
 
         $approvalRequest->load(['bundle.files', 'bundle.recipients', 'bundle.user', 'requester']);
 
