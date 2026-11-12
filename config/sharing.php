@@ -28,6 +28,15 @@ return [
     'allow_forever' => (bool) env('SHARING_ALLOW_FOREVER', true),
 
     /**
+     ** Cleanup of bundles that never get shared (fs:bundle:purge).
+     ** Drafts: never completed, no activity for this many hours.
+     ** Denied: denied by a reviewer and not resubmitted for this many days.
+     ** Set either to 0 to keep those bundles forever.
+     */
+    'draft_retention_hours' => (int) env('DRAFT_RETENTION_HOURS', 72),
+    'denied_retention_days' => (int) env('DENIED_RETENTION_DAYS', 14),
+
+    /**
      ** IP v4 access limitations
      ** Acceptable formats :
      **  1. Full IP address (192.168.10.2)

@@ -77,6 +77,8 @@ class BundleApprovalService
             throw new InvalidArgumentException(__('approval.request-not-pending'));
         }
 
+        $this->assertNotOwnRequest($request, $reviewer);
+
         return DB::transaction(function () use ($request, $reviewer) {
             $request->update([
                 'status' => ApprovalRequestStatus::Approved,
@@ -112,6 +114,8 @@ class BundleApprovalService
         if (! $request->isPending()) {
             throw new InvalidArgumentException(__('approval.request-not-pending'));
         }
+
+        $this->assertNotOwnRequest($request, $reviewer);
 
         $reason = trim($reason);
         if ($reason === '') {
@@ -153,10 +157,31 @@ class BundleApprovalService
         });
     }
 
+    /**
+     * Separation of duties: nobody (admins included) reviews their own bundle.
+     */
+    public function isOwnRequest(ApprovalRequest $request, User $reviewer): bool
+    {
+        if ($request->requested_by !== null && $request->requested_by === $reviewer->id) {
+            return true;
+        }
+
+        $ownerId = $request->bundle?->user_id;
+
+        return $ownerId !== null && $ownerId === $reviewer->id;
+    }
+
     public function assertEditable(Bundle $bundle): void
     {
         if (! $bundle->isEditable()) {
             abort(403, __('approval.bundle-not-editable'));
+        }
+    }
+
+    private function assertNotOwnRequest(ApprovalRequest $request, User $reviewer): void
+    {
+        if ($this->isOwnRequest($request, $reviewer)) {
+            throw new InvalidArgumentException(__('approval.cannot-review-own'));
         }
     }
 
@@ -222,6 +247,7 @@ class BundleApprovalService
     {
         ReviewerPool::all()
             ->filter(fn (User $reviewer) => filled($reviewer->email))
+            ->reject(fn (User $reviewer) => $this->isOwnRequest($request, $reviewer))
             ->each(fn (User $reviewer) => Mail::to($reviewer->email)->queue(
                 new ApprovalRequestSubmittedMail($request)
             ));
