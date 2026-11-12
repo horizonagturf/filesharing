@@ -40,7 +40,7 @@ class BundleApprovalService
         return DB::transaction(function () use ($bundle, $user) {
             $this->finalizeMetadata($bundle);
 
-            if ($user !== null && $this->approvalPolicy->requiresApproval($user)) {
+            if ($this->approvalPolicy->requiresApprovalForBundle($bundle)) {
                 $bundle->status = BundleStatus::PendingApproval;
                 $bundle->completed = true;
                 $bundle->expires_at = null;
@@ -50,7 +50,7 @@ class BundleApprovalService
 
                 $request = ApprovalRequest::create([
                     'bundle_id' => $bundle->id,
-                    'requested_by' => $user->id,
+                    'requested_by' => $bundle->user_id,
                     'status' => ApprovalRequestStatus::Pending,
                 ]);
 

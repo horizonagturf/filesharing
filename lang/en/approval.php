@@ -5,6 +5,7 @@ return [
     'queue-empty' => 'No bundles pending approval.',
     'review-bundle' => 'Review bundle',
     'submitted-by' => 'Submitted by',
+    'anonymous-uploader' => 'Anonymous upload (not signed in)',
     'submitted-at' => 'Submitted',
     'file-count' => 'Files',
     'total-size' => 'Total size',

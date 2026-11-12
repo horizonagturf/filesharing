@@ -32,7 +32,7 @@
 
         <x-ui.page-header
             :title="$approvalRequest->bundle->title ?? __('approval.untitled-bundle')"
-            :subtitle="__('approval.submitted-by').': '.($approvalRequest->requester->name ?? $approvalRequest->requester->username).' · '.__('approval.submitted-at').': '.$approvalRequest->created_at->format('Y-m-d H:i')"
+            :subtitle="__('approval.submitted-by').': '.$approvalRequest->requesterName().' · '.__('approval.submitted-at').': '.$approvalRequest->created_at->format('Y-m-d H:i')"
         />
 
         <div class="grid gap-6 lg:grid-cols-3">

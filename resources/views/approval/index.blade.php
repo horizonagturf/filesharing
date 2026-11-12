@@ -29,7 +29,7 @@
                                 <p class="text-sm font-medium text-gray-900">{{ $request->bundle->title ?? __('approval.untitled-bundle') }}</p>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-600">
-                                {{ $request->requester->name ?? $request->requester->username }}
+                                {{ $request->requesterName() }}
                             </td>
                             <td class="hidden px-4 py-3 text-sm text-gray-500 sm:table-cell">
                                 {{ $request->bundle->files->count() }}
