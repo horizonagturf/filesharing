@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\SystemHealth;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Events\MessageSending;
@@ -45,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->registerMailLogging();
 
-        Event::listen(Looping::class, fn () => \App\Services\SystemHealth::recordQueueHeartbeat());
+        Event::listen(Looping::class, fn () => SystemHealth::recordQueueHeartbeat());
 
         if (! empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
             \URL::forceScheme('https');
