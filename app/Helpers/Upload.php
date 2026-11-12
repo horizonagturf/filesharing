@@ -97,10 +97,13 @@ class Upload
         ];
 
         foreach ($values as $k => $v) {
-            $values[$k] = self::humanReadableToBytes($v);
+            $values[$k] = self::humanReadableToBytes((string) $v);
         }
 
-        $min = min($values);
+        // PHP uses -1 (or 0) for "no limit"; ignore those so they don't win min().
+        $values = array_filter($values, fn (int|float $v) => $v > 0);
+
+        $min = $values === [] ? PHP_INT_MAX : min($values);
         if ($human === true) {
             return self::humanFilesize($min);
         }
