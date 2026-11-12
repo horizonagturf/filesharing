@@ -1,14 +1,15 @@
 <?php
 
 use App\Http\Middleware\Authenticate;
-use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\EnforceSessionIdleTimeout;
+use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\GuestAccess;
 use App\Http\Middleware\Localisation;
 use App\Http\Middleware\OwnerAccess;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\UploadAccess;
+use App\Services\SystemHealth;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -50,5 +51,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('fs:bundle:purge')->everyFiveMinutes();
         $schedule->command('fs:audit:purge')->daily();
+        $schedule->call(fn () => SystemHealth::recordSchedulerHeartbeat())
+            ->name('health-heartbeat')
+            ->everyMinute();
     })
     ->create();

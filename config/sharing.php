@@ -1,5 +1,7 @@
 <?php
 
+use App\Services\SharingSettings;
+
 return [
 
     'max_filesize' => env('UPLOAD_MAX_FILESIZE', '5M'),
@@ -49,13 +51,13 @@ return [
 
     'upload_blocked_extensions' => env(
         'UPLOAD_BLOCKED_EXTENSIONS',
-        \App\Services\SharingSettings::DEFAULT_BLOCKED_EXTENSIONS,
+        SharingSettings::DEFAULT_BLOCKED_EXTENSIONS,
     ),
 
     'settings_defaults' => [
-        \App\Services\SharingSettings::KEY_DEFAULT_SHARE_MODE => null,
-        \App\Services\SharingSettings::KEY_BLOCKED_EXTENSIONS => null,
-        \App\Services\SharingSettings::KEY_INVITATION_REQUIRE_OTP => null,
-        \App\Services\SharingSettings::KEY_INVITATION_OTP_DEFAULT => null,
+        SharingSettings::KEY_DEFAULT_SHARE_MODE => null,
+        SharingSettings::KEY_BLOCKED_EXTENSIONS => null,
+        SharingSettings::KEY_INVITATION_REQUIRE_OTP => null,
+        SharingSettings::KEY_INVITATION_OTP_DEFAULT => null,
     ],
 ];
