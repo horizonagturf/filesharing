@@ -41,6 +41,8 @@ class ManageBranding extends Page implements HasForms
             'tos_url' => $settings[BrandingSettings::KEY_TOS_URL] ?? '',
             'privacy_url' => $settings[BrandingSettings::KEY_PRIVACY_URL] ?? '',
             'show_credit' => $branding->showCreditFooter(),
+            'mail_from_name' => $settings[BrandingSettings::KEY_MAIL_FROM_NAME] ?? '',
+            'mail_from_address' => $settings[BrandingSettings::KEY_MAIL_FROM_ADDRESS] ?? '',
         ]);
 
         $this->hadLogoInForm = filled($this->data['logo_path'] ?? null);
@@ -64,6 +66,20 @@ class ManageBranding extends Page implements HasForms
                             ->visibility('public')
                             ->maxSize(2048),
                     ]),
+                Forms\Components\Section::make('Email sender')
+                    ->description('Overrides the MAIL_FROM_NAME and MAIL_FROM_ADDRESS environment values. Leave blank to use the defaults. The address must be allowed by your mail provider.')
+                    ->schema([
+                        Forms\Components\TextInput::make('mail_from_name')
+                            ->label('Mail from name')
+                            ->placeholder(config('mail.from.name'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('mail_from_address')
+                            ->label('Mail from email')
+                            ->email()
+                            ->placeholder(config('mail.from.address'))
+                            ->maxLength(255),
+                    ])
+                    ->columns(2),
                 Forms\Components\Section::make('Colors')
                     ->schema([
                         Forms\Components\ColorPicker::make('primary_color')
@@ -113,6 +129,8 @@ class ManageBranding extends Page implements HasForms
             $branding->set(BrandingSettings::KEY_LOGO_PATH, null);
         }
 
+        $branding->set(BrandingSettings::KEY_MAIL_FROM_NAME, $data['mail_from_name'] ?: null);
+        $branding->set(BrandingSettings::KEY_MAIL_FROM_ADDRESS, $data['mail_from_address'] ?: null);
         $branding->set(BrandingSettings::KEY_PRIMARY_COLOR, $data['primary_color']);
         $branding->set(BrandingSettings::KEY_ACCENT_COLOR, $data['accent_color']);
         $branding->set(BrandingSettings::KEY_FOOTER_TEXT, $data['footer_text'] ?: null);

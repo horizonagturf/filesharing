@@ -23,6 +23,10 @@ class BrandingSettings
 
     public const KEY_SHOW_CREDIT = 'branding.show_credit';
 
+    public const KEY_MAIL_FROM_NAME = 'branding.mail_from_name';
+
+    public const KEY_MAIL_FROM_ADDRESS = 'branding.mail_from_address';
+
     public const DEFAULT_LOGO_PATH = 'images/logo.svg';
 
     private const CACHE_KEY = 'branding.settings';
@@ -65,6 +69,20 @@ class BrandingSettings
     public function appName(): string
     {
         return $this->get(self::KEY_APP_NAME) ?? config('app.name');
+    }
+
+    public function mailFromName(): ?string
+    {
+        $value = $this->get(self::KEY_MAIL_FROM_NAME);
+
+        return filled($value) ? $value : null;
+    }
+
+    public function mailFromAddress(): ?string
+    {
+        $value = $this->get(self::KEY_MAIL_FROM_ADDRESS);
+
+        return filled($value) ? $value : null;
     }
 
     public function showCreditFooter(): bool
