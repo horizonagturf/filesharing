@@ -32,14 +32,14 @@
 
         <x-ui.page-header
             :title="$approvalRequest->bundle->title ?? __('approval.untitled-bundle')"
-            :subtitle="__('approval.submitted-by').': '.($approvalRequest->requester->name ?? $approvalRequest->requester->username).' · '.__('approval.submitted-at').': '.$approvalRequest->created_at->format('Y-m-d H:i')"
+            :subtitle="__('approval.submitted-by').': '.$approvalRequest->requesterName().' · '.__('approval.submitted-at').': '.$approvalRequest->created_at->format('Y-m-d H:i')"
         />
 
         <div class="grid gap-6 lg:grid-cols-3">
             <div class="space-y-6 lg:col-span-2">
                 @if ($approvalRequest->bundle->description)
                     <div class="prose prose-sm max-w-none text-gray-700">
-                        {!! \Illuminate\Support\Str::markdown($approvalRequest->bundle->description) !!}
+                        {!! \App\Support\SafeMarkdown::render($approvalRequest->bundle->description) !!}
                     </div>
                 @endif
 

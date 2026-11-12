@@ -24,9 +24,11 @@ class InvitationController extends Controller
         abort_unless($bundle->isShareable(), 404);
         abort_if($recipient->isRevoked(), 404);
 
-        if (RecipientAccess::isVerified($bundle, $recipient->email)) {
-            RecipientAccess::grant($recipient);
-
+        // Only skip the code step when *this browser session* already verified
+        // as this recipient. A recipient having verified once (verified_at set)
+        // must not let anyone holding a forwarded invitation link straight in.
+        if (RecipientAccess::emailFor($bundle) === strtolower($recipient->email)
+            && RecipientAccess::isVerified($bundle)) {
             return redirect()->route('bundle.preview', ['bundle' => $bundle]);
         }
 

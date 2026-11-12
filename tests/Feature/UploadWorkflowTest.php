@@ -545,6 +545,11 @@ class UploadWorkflowTest extends TestCase
             'status' => true,
         ]);
 
+        // Files are only listed once the bundle password has been entered.
+        $this->postJson("/bundle/{$slug}/unlock?auth={$bundle->preview_token}", [
+            'password' => 'bundle-secret',
+        ])->assertOk();
+
         $response = $this->get("/bundle/{$slug}/preview?auth={$bundle->preview_token}")
             ->assertOk();
 

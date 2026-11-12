@@ -9,6 +9,7 @@ use App\Models\Bundle;
 use App\Services\Audit;
 use App\Services\OtpPolicy;
 use App\Services\ShareModePolicy;
+use App\Support\BundleTokens;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -82,12 +83,12 @@ class WebController extends Controller
                 'share_mode' => $this->shareModePolicy->effectiveShareMode($user),
                 'require_otp' => $this->otpPolicy->defaultRequireOtp(),
                 'completed' => false,
-                'expiry' => config('sharing.default-expiry', 86400),
+                'expiry' => (string) config('sharing.default_expiry', 86400),
                 'expires_at' => null,
                 'password' => null,
-                'slug' => substr(sha1(uniqid('slug_', true)), 0, rand(35, 40)),
-                'owner_token' => substr(sha1(uniqid('preview_', true)), 0, 15),
-                'preview_token' => substr(sha1(uniqid('preview_', true)), 0, 15),
+                'slug' => BundleTokens::slug(),
+                'owner_token' => BundleTokens::token(),
+                'preview_token' => BundleTokens::token(),
                 'fullsize' => 0,
                 'title' => null,
                 'description' => null,

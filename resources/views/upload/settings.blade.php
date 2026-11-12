@@ -24,7 +24,9 @@
 
         <div class="grid gap-4 sm:grid-cols-3">
             <x-ui.select id="upload-expiry" name="expiry" :label="__('app.upload-expiry')" required x-model="bundle.expiry">
-                <option value="forever">@lang('app.forever')</option>
+                @if (config('sharing.allow_forever', true))
+                    <option value="forever">@lang('app.forever')</option>
+                @endif
                 @foreach (config('sharing.expiry_values') as $k => $e)
                     <option value="{{ Upload::getExpirySeconds($k) }}">@lang('app.'.$e)</option>
                 @endforeach
@@ -44,6 +46,7 @@
                 id="upload-password"
                 type="text"
                 name="password"
+                maxlength="100"
                 :label="__('app.bundle-password')"
                 :placeholder="__('app.leave-empty')"
                 x-model="bundle.password"

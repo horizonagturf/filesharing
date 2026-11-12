@@ -4,6 +4,10 @@ return [
 
     'oauth_rate_limit_per_minute' => (int) env('OAUTH_RATE_LIMIT_PER_MINUTE', 10),
 
+    // Password login attempts per minute for one username from one IP. Each IP
+    // also gets four times this across all usernames.
+    'login_rate_limit_per_minute' => (int) env('LOGIN_RATE_LIMIT_PER_MINUTE', 5),
+
     'download_rate_limit_per_minute' => (int) env('DOWNLOAD_RATE_LIMIT_PER_MINUTE', 30),
 
     'otp_route_rate_limit_per_hour' => (int) env('OTP_ROUTE_RATE_LIMIT_PER_HOUR', 30),

@@ -16,7 +16,9 @@ Route::get('/help/{topic}', [HelpController::class, 'show'])
     ->where('topic', '[a-z0-9\-]+');
 
 Route::get('/login', [WebController::class, 'login'])->name('login');
-Route::post('/login', [WebController::class, 'doLogin'])->name('login.post');
+Route::post('/login', [WebController::class, 'doLogin'])
+    ->middleware('throttle:login')
+    ->name('login.post');
 Route::get('/logout', [WebController::class, 'logout'])->name('logout');
 
 Route::get('/auth/microsoft', [MicrosoftAuthController::class, 'redirect'])->name('auth.microsoft');

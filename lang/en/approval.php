@@ -5,6 +5,8 @@ return [
     'queue-empty' => 'No bundles pending approval.',
     'review-bundle' => 'Review bundle',
     'submitted-by' => 'Submitted by',
+    'anonymous-uploader' => 'Anonymous upload (not signed in)',
+    'cannot-review-own' => 'You cannot approve or deny your own bundle. Another reviewer must review it.',
     'submitted-at' => 'Submitted',
     'file-count' => 'Files',
     'total-size' => 'Total size',

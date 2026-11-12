@@ -18,6 +18,7 @@ enum AuditEvent: string
     case BundleZipDownloaded = 'bundle.zip_downloaded';
     case AccessDenied = 'access.denied';
     case AdminBundleRevoked = 'admin.bundle_revoked';
+    case BundlePurged = 'bundle.purged';
     case SsoLogin = 'sso.login';
     case SsoRejected = 'sso.rejected';
 

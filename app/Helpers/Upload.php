@@ -97,7 +97,7 @@ class Upload
         ];
 
         foreach ($values as $k => $v) {
-            $values[$k] = self::humanReadableToBytes($v);
+            $values[$k] = self::humanReadableToBytes((string) $v);
         }
 
         // PHP uses -1 (or 0) to mean "unlimited"; those must not become the minimum.
@@ -235,6 +235,26 @@ class Upload
         }
 
         return false;
+    }
+
+    /**
+     * Expiry values a bundle may be saved with: the configured choices (as
+     * seconds) plus "forever" when the admin allows it.
+     *
+     * @return list<string>
+     */
+    public static function allowedExpiryValues(): array
+    {
+        $values = array_map(
+            fn (string $key) => (string) self::getExpirySeconds($key),
+            array_keys(config('sharing.expiry_values', []))
+        );
+
+        if (config('sharing.allow_forever', true)) {
+            $values[] = 'forever';
+        }
+
+        return array_values(array_unique($values));
     }
 
     public static function getExpirySeconds(string $expiry): int
