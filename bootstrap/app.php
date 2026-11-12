@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Middleware\Authenticate;
-use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\EnforceSessionIdleTimeout;
+use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\GuestAccess;
 use App\Http\Middleware\Localisation;
 use App\Http\Middleware\OwnerAccess;

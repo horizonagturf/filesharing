@@ -9,6 +9,7 @@ use App\Models\Bundle;
 use App\Models\User;
 use App\Services\AuditExporter;
 use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -122,9 +123,9 @@ class AuditLogResource extends Resource
         return false;
     }
 
-    public static function exportAction(): \Filament\Actions\Action
+    public static function exportAction(): Action
     {
-        return \Filament\Actions\Action::make('export')
+        return Action::make('export')
             ->label(__('audit.export'))
             ->icon('heroicon-o-arrow-down-tray')
             ->form([
