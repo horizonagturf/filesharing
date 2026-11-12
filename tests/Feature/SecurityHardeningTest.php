@@ -23,7 +23,7 @@ use Tests\TestCase;
 
 class SecurityHardeningTest extends TestCase
 {
-    private const XSS_DESCRIPTION = "Hello <img src=x onerror=alert(1)> <script>alert(2)</script> [click](javascript:alert(3))";
+    private const XSS_DESCRIPTION = 'Hello <img src=x onerror=alert(1)> <script>alert(2)</script> [click](javascript:alert(3))';
 
     // --- Markdown descriptions are rendered without raw HTML -----------------
 
@@ -340,7 +340,6 @@ class SecurityHardeningTest extends TestCase
             'max_downloads' => 0,
             'password' => null,
             'share_mode' => ShareMode::Invitation->value,
-            'require_otp' => false,
             'auth' => $bundle->owner_token,
         ], $overrides);
 
