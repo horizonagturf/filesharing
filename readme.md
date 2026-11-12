@@ -126,6 +126,8 @@ Also ensure `APP_URL` matches the URL users visit and leave `UPLOAD_LIMIT_IPS` e
 | `APPROVAL_REQUIRED_ANONYMOUS` | `false` | Require approval for bundles uploaded without signing in (SSO off, IP allowlisted) |
 | `DEFAULT_SHARE_MODE` | `invitation` | `invitation` or `static_link` for new bundles |
 | `AZURE_ALLOWED_DOMAINS` | — | Comma-separated allowed email domains |
+| `INVITATION_REQUIRE_OTP` | `true` | Enforce OTP for invitation bundles; only groups with "Allow invitation without OTP" can turn it off |
+| `INVITATION_OTP_DEFAULT` | `true` | When OTP is not enforced, whether it starts ticked for new bundles |
 | `INVITATION_LINK_DAYS` | `30` | Invitation link validity |
 | `BRANDING_SHOW_CREDIT` | `true` | Footer credit; overridable in admin Branding settings |
 

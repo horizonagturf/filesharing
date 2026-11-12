@@ -36,7 +36,8 @@ Manual QA script for enterprise deployment sign-off. Run against staging before 
 - [ ] User without allowed group cannot select static link mode
 - [ ] Static link preview works with `?auth={preview_token}` on approved bundle
 - [ ] Static link UI shows less-secure warning
-- [ ] Org default `INVITATION_REQUIRE_OTP=false` creates bundles without OTP step
+- [ ] `INVITATION_REQUIRE_OTP=false` with `INVITATION_OTP_DEFAULT=true` shows OTP ticked by default and users can untick it
+- [ ] `INVITATION_REQUIRE_OTP=false` with `INVITATION_OTP_DEFAULT=false` creates bundles without OTP step
 - [ ] Upload OTP toggle visible when group allows or org default is false
 
 ## Admin & operations

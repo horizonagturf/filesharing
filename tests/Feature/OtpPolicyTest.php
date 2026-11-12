@@ -16,7 +16,10 @@ class OtpPolicyTest extends TestCase
 {
     public function test_new_bundle_inherits_org_default_require_otp(): void
     {
-        config(['sharing.invitation_require_otp' => false]);
+        config([
+            'sharing.invitation_require_otp' => false,
+            'sharing.invitation_otp_default' => false,
+        ]);
 
         $user = User::factory()->create();
 
@@ -28,6 +31,51 @@ class OtpPolicyTest extends TestCase
             'user_id' => $user->id,
             'require_otp' => false,
         ]);
+    }
+
+    public function test_new_bundle_defaults_otp_on_when_not_enforced(): void
+    {
+        config([
+            'sharing.invitation_require_otp' => false,
+            'sharing.invitation_otp_default' => true,
+        ]);
+
+        $user = User::factory()->create();
+
+        $this->actingAsUser($user)
+            ->postJson('/new', [], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('bundles', [
+            'user_id' => $user->id,
+            'require_otp' => true,
+        ]);
+
+        $policy = app(OtpPolicy::class);
+        $this->assertTrue($policy->defaultRequireOtp());
+        $this->assertTrue($policy->canChooseOtpSetting($user));
+    }
+
+    public function test_user_can_untick_otp_when_default_on_but_not_enforced(): void
+    {
+        config([
+            'sharing.invitation_require_otp' => false,
+            'sharing.invitation_otp_default' => true,
+        ]);
+
+        $user = User::factory()->create();
+        $bundle = $this->createBundle($user);
+
+        $this->actingAsUser($user)
+            ->postJson("/upload/{$bundle->slug}", [
+                'title' => 'Test',
+                'expiry' => '86400',
+                'max_downloads' => 0,
+                'require_otp' => false,
+                'auth' => $bundle->owner_token,
+            ], $this->uploadHeaders($bundle))
+            ->assertOk()
+            ->assertJsonPath('require_otp', false);
     }
 
     public function test_admin_can_set_org_default_require_otp(): void
