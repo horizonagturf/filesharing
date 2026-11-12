@@ -41,7 +41,11 @@ return [
 
     'default_share_mode' => env('DEFAULT_SHARE_MODE', 'invitation'),
 
+    // Enforce OTP: when true, only groups with allow_invitation_without_otp may skip it.
     'invitation_require_otp' => env('INVITATION_REQUIRE_OTP', true),
+
+    // Default OTP to on for new bundles when OTP is not enforced (users may still untick it).
+    'invitation_otp_default' => env('INVITATION_OTP_DEFAULT', true),
 
     'upload_blocked_extensions' => env(
         'UPLOAD_BLOCKED_EXTENSIONS',
@@ -52,5 +56,6 @@ return [
         \App\Services\SharingSettings::KEY_DEFAULT_SHARE_MODE => null,
         \App\Services\SharingSettings::KEY_BLOCKED_EXTENSIONS => null,
         \App\Services\SharingSettings::KEY_INVITATION_REQUIRE_OTP => null,
+        \App\Services\SharingSettings::KEY_INVITATION_OTP_DEFAULT => null,
     ],
 ];

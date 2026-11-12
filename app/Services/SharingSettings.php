@@ -15,6 +15,8 @@ class SharingSettings
 
     public const KEY_INVITATION_REQUIRE_OTP = 'sharing.invitation_require_otp';
 
+    public const KEY_INVITATION_OTP_DEFAULT = 'sharing.invitation_otp_default';
+
     public const DEFAULT_BLOCKED_EXTENSIONS = 'exe,bat,cmd,com,scr,pif,msi,dll,ps1,ps2,psc1,psc2,vbs,vbe,jse,wsf,wsh,reg,inf,cpl';
 
     private const CACHE_KEY = 'sharing.settings';
@@ -61,6 +63,30 @@ class SharingSettings
         $this->set(
             self::KEY_INVITATION_REQUIRE_OTP,
             $required === $envDefault ? null : ($required ? '1' : '0'),
+        );
+    }
+
+    /**
+     * Whether OTP starts ticked for new bundles when it is not enforced.
+     */
+    public function invitationOtpDefault(): bool
+    {
+        $stored = $this->get(self::KEY_INVITATION_OTP_DEFAULT);
+
+        if ($stored !== null) {
+            return filter_var($stored, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        return (bool) config('sharing.invitation_otp_default', true);
+    }
+
+    public function setInvitationOtpDefault(bool $default): void
+    {
+        $envDefault = (bool) config('sharing.invitation_otp_default', true);
+
+        $this->set(
+            self::KEY_INVITATION_OTP_DEFAULT,
+            $default === $envDefault ? null : ($default ? '1' : '0'),
         );
     }
 
