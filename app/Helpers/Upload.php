@@ -100,10 +100,10 @@ class Upload
             $values[$k] = self::humanReadableToBytes((string) $v);
         }
 
-        // PHP uses -1 (or 0) for "no limit"; ignore those so they don't win min().
-        $values = array_filter($values, fn (int|float $v) => $v > 0);
+        // PHP uses -1 (or 0) to mean "unlimited"; those must not become the minimum.
+        $limits = array_filter($values, fn ($bytes) => $bytes > 0);
 
-        $min = $values === [] ? PHP_INT_MAX : min($values);
+        $min = min($limits ?: [$values['config']]);
         if ($human === true) {
             return self::humanFilesize($min);
         }

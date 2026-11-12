@@ -19,8 +19,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
-        <!-- Test-only key so the suite runs without a .env (e.g. in CI). Never use in production. -->
-        <env name="APP_KEY" value="base64:CymknqTEgzYTPi+I5/QWW2aZnlMeWYrTf9IJzK+D/TY="/>
+        <env name="APP_KEY" value="base64:3y9m8ByMYv5zc7Whi87KbfveBKmlowMjMljt27wcfIo="/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
