@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\AuditEvent;
 use App\Exceptions\SsoAuthenticationException;
 use App\Http\Controllers\Controller;
-use App\Enums\AuditEvent;
 use App\Services\Audit;
 use App\Services\MicrosoftSsoProvisioner;
 use Illuminate\Http\RedirectResponse;
