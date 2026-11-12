@@ -8,10 +8,10 @@ use App\Services\BundleOwnerAccess;
 use App\Services\BundlePasswordAccess;
 use App\Services\OtpPolicy;
 use App\Services\ShareModePolicy;
+use App\Support\SafeMarkdown;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class BundleResource extends JsonResource
 {
@@ -28,6 +28,12 @@ class BundleResource extends JsonResource
         $guestPreview = (bool) $request->attributes->get('bundle_guest_preview');
 
         $full = ! $guestPreview && BundleOwnerAccess::isOwner($request, $this->resource);
+
+        // Guests must unlock a password-protected bundle before they can see
+        // what is inside it (file names, sizes, thumbnails, description).
+        $contentsHidden = ! $full
+            && BundlePasswordAccess::requiresPassword($this->resource)
+            && ! BundlePasswordAccess::isUnlocked($this->resource);
 
         $fileContext = $full
             ? FileResource::CONTEXT_OWNER
@@ -62,11 +68,11 @@ class BundleResource extends JsonResource
             'slug' => $this->slug,
             'fullsize' => (int) $this->fullsize,
             'title' => $this->title,
-            'description' => $this->description,
-            'description_html' => ! empty($this->description) ? Str::markdown($this->description) : null,
+            'description' => $contentsHidden ? null : $this->description,
+            'description_html' => $contentsHidden ? null : SafeMarkdown::render($this->description),
             'max_downloads' => (int) $this->max_downloads,
             'downloads' => (int) $this->downloads,
-            'files' => $this->files->map(function ($file) use ($fileContext) {
+            'files' => $contentsHidden ? [] : $this->files->map(function ($file) use ($fileContext) {
                 $file->setRelation('bundle', $this->resource);
 
                 return (new FileResource($file))->context($fileContext);

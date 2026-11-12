@@ -39,7 +39,7 @@
             <div class="space-y-6 lg:col-span-2">
                 @if ($approvalRequest->bundle->description)
                     <div class="prose prose-sm max-w-none text-gray-700">
-                        {!! \Illuminate\Support\Str::markdown($approvalRequest->bundle->description) !!}
+                        {!! \App\Support\SafeMarkdown::render($approvalRequest->bundle->description) !!}
                     </div>
                 @endif
 

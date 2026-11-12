@@ -20,6 +20,12 @@ return [
     'default_expiry' => 86400, // 1 Day,
 
     /**
+     ** Whether uploaders may choose "forever" (no expiry). Set to false to
+     ** force every share to expire within the longest value above.
+     */
+    'allow_forever' => (bool) env('SHARING_ALLOW_FOREVER', true),
+
+    /**
      ** IP v4 access limitations
      ** Acceptable formats :
      **  1. Full IP address (192.168.10.2)

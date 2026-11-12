@@ -150,6 +150,7 @@ Also ensure `APP_URL` matches the URL users visit and leave `UPLOAD_LIMIT_IPS` e
 | `UPLOAD_BLOCKED_EXTENSIONS` | Comma-separated blocked extensions (no dots); unset uses built-in default; overridable in admin Sharing settings |
 | `HASH_MAX_FILESIZE` | Max size to hash for dedup checks |
 | `LIMIT_DOWNLOAD_RATE` | Download throttle (e.g. `100K`, `1M`) |
+| `SHARING_ALLOW_FOREVER` | Let uploaders pick "forever" (no expiry). Set `false` to force every share to expire (default `true`) |
 | `UPLOAD_LIMIT_IPS` | IP whitelist when SSO disabled; **ignored when SSO enabled** |
 
 See also [Configuration](#configuration) for locale, timezone, and other app settings.

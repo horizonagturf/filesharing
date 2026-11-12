@@ -234,6 +234,26 @@ class Upload
         return false;
     }
 
+    /**
+     * Expiry values a bundle may be saved with: the configured choices (as
+     * seconds) plus "forever" when the admin allows it.
+     *
+     * @return list<string>
+     */
+    public static function allowedExpiryValues(): array
+    {
+        $values = array_map(
+            fn (string $key) => (string) self::getExpirySeconds($key),
+            array_keys(config('sharing.expiry_values', []))
+        );
+
+        if (config('sharing.allow_forever', true)) {
+            $values[] = 'forever';
+        }
+
+        return array_values(array_unique($values));
+    }
+
     public static function getExpirySeconds(string $expiry): int
     {
         $unit_multipliers = [

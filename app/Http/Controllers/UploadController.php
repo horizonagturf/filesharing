@@ -16,15 +16,27 @@ use App\Services\ImageThumbnailService;
 use App\Services\OtpPolicy;
 use App\Services\ShareModePolicy;
 use App\Services\SharingSettings;
+use App\Support\BundleTokens;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
 
 class UploadController extends Controller
 {
+    private const MAX_TITLE_LENGTH = 255;
+
+    private const MAX_DESCRIPTION_LENGTH = 5000;
+
+    private const MAX_PASSWORD_LENGTH = 100;
+
+    private const MAX_DOWNLOADS = 999;
+
+    private const MAX_RECIPIENTS = 100;
+
     public function __construct(
         private readonly BundleApprovalService $approvalService,
         private readonly BundleInvitationService $invitationService,
@@ -57,8 +69,13 @@ class UploadController extends Controller
         $this->approvalService->assertEditable($bundle);
 
         $request->validate([
-            'recipients' => 'nullable|array',
-            'recipients.*' => 'email',
+            'expiry' => ['sometimes', 'required', 'string', Rule::in(Upload::allowedExpiryValues())],
+            'title' => 'nullable|string|max:'.self::MAX_TITLE_LENGTH,
+            'description' => 'nullable|string|max:'.self::MAX_DESCRIPTION_LENGTH,
+            'password' => 'nullable|string|max:'.self::MAX_PASSWORD_LENGTH,
+            'max_downloads' => 'nullable|integer|min:0|max:'.self::MAX_DOWNLOADS,
+            'recipients' => 'nullable|array|max:'.self::MAX_RECIPIENTS,
+            'recipients.*' => 'email|max:254',
             'share_mode' => 'nullable|in:invitation,static_link',
             'require_otp' => 'nullable|boolean',
         ]);
@@ -80,11 +97,11 @@ class UploadController extends Controller
                 );
 
             $bundle->update([
-                'expiry' => $request->expiry ?? null,
-                'password' => $request->password ?? null,
-                'title' => $request->title ?? null,
-                'description' => $request->description ?? null,
-                'max_downloads' => $request->max_downloads ?? 0,
+                'expiry' => (string) $request->input('expiry', $bundle->expiry ?? config('sharing.default_expiry', 86400)),
+                'password' => filled($request->input('password')) ? (string) $request->input('password') : null,
+                'title' => $request->input('title'),
+                'description' => $request->input('description'),
+                'max_downloads' => (int) ($request->input('max_downloads') ?? 0),
                 'share_mode' => $shareMode,
                 'require_otp' => $requireOtp,
             ]);
@@ -130,7 +147,7 @@ class UploadController extends Controller
             ], 422);
         }
 
-        $filename = substr(sha1($original.time()), 0, mt_rand(20, 30));
+        $filename = BundleTokens::storageFilename();
 
         // Moving file to final destination
         try {

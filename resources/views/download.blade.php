@@ -67,7 +67,7 @@
                     <template x-if="! expires_at"><span>@lang('app.forever')</span></template>
                 </dd>
             </div>
-            <div>
+            <div x-show="downloadsUnlocked">
                 <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">@lang('app.files')</dt>
                 <dd class="mt-1 text-sm text-gray-900" x-text="Object.keys(metadata.files).length"></dd>
             </div>
@@ -89,7 +89,7 @@
             </div>
         </dl>
 
-        <h3 class="mb-2 text-sm font-semibold text-gray-900">@lang('app.files-list')</h3>
+        <h3 class="mb-2 text-sm font-semibold text-gray-900" x-show="downloadsUnlocked">@lang('app.files-list')</h3>
 
         <ul class="max-h-48 divide-y divide-gray-100 overflow-y-auto rounded-lg ring-1 ring-gray-950/5" x-show="Object.keys(metadata.files).length > 0">
             <template x-for="f in metadata.files" :key="f.uuid">

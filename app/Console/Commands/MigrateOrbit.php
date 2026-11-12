@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\Bundle;
 use App\Models\File;
 use App\Models\User;
+use App\Support\BundleTokens;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
@@ -153,8 +154,8 @@ class MigrateOrbit extends Command
                 'title' => $data['title'] ?? null,
                 'description' => $data['description'] ?? null,
                 'password' => $data['password'] ?? null,
-                'owner_token' => $data['owner_token'] ?? substr(sha1($slug), 0, 15),
-                'preview_token' => $data['preview_token'] ?? substr(sha1($slug.'preview'), 0, 15),
+                'owner_token' => $data['owner_token'] ?? BundleTokens::token(),
+                'preview_token' => $data['preview_token'] ?? BundleTokens::token(),
                 'fullsize' => (int) ($data['fullsize'] ?? 0),
                 'max_downloads' => isset($data['max_downloads']) ? (int) $data['max_downloads'] : null,
                 'downloads' => (int) ($data['downloads'] ?? 0),
