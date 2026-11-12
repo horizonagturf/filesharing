@@ -120,4 +120,30 @@ class AdminBrandingTest extends TestCase
 
         $this->assertNull($branding->get(BrandingSettings::KEY_LOGO_PATH));
     }
+
+    public function test_admin_can_set_mail_sender_and_it_is_applied_to_outgoing_mail(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        Livewire::actingAs($admin)
+            ->test(ManageBranding::class)
+            ->fillForm([
+                'primary_color' => '#112233',
+                'accent_color' => '#445566',
+                'mail_from_name' => 'Org Files',
+                'mail_from_address' => 'files@org.test',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $branding = app(BrandingSettings::class);
+        $this->assertSame('Org Files', $branding->mailFromName());
+        $this->assertSame('files@org.test', $branding->mailFromAddress());
+
+        \Illuminate\Support\Facades\Mail::raw('hi', fn ($m) => $m->to('a@b.test')->subject('t'));
+        $sent = \Illuminate\Support\Facades\Mail::mailer('array')->getSymfonyTransport()->messages()->last();
+        $from = $sent->getOriginalMessage()->getFrom()[0];
+        $this->assertSame('files@org.test', $from->getAddress());
+        $this->assertSame('Org Files', $from->getName());
+    }
 }
