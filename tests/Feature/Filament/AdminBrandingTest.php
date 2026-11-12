@@ -6,6 +6,7 @@ use App\Filament\Pages\ManageBranding;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\BrandingSettings;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -140,8 +141,8 @@ class AdminBrandingTest extends TestCase
         $this->assertSame('Org Files', $branding->mailFromName());
         $this->assertSame('files@org.test', $branding->mailFromAddress());
 
-        \Illuminate\Support\Facades\Mail::raw('hi', fn ($m) => $m->to('a@b.test')->subject('t'));
-        $sent = \Illuminate\Support\Facades\Mail::mailer('array')->getSymfonyTransport()->messages()->last();
+        Mail::raw('hi', fn ($m) => $m->to('a@b.test')->subject('t'));
+        $sent = Mail::mailer('array')->getSymfonyTransport()->messages()->last();
         $from = $sent->getOriginalMessage()->getFrom()[0];
         $this->assertSame('files@org.test', $from->getAddress());
         $this->assertSame('Org Files', $from->getName());
