@@ -9,6 +9,7 @@ use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\SendQueuedMailable;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\Looping;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -43,6 +44,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->registerMailLogging();
+
+        Event::listen(Looping::class, fn () => \App\Services\SystemHealth::recordQueueHeartbeat());
 
         if (! empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
             \URL::forceScheme('https');

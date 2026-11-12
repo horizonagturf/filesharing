@@ -50,5 +50,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('fs:bundle:purge')->everyFiveMinutes();
         $schedule->command('fs:audit:purge')->daily();
+        $schedule->call(fn () => \App\Services\SystemHealth::recordSchedulerHeartbeat())
+            ->name('health-heartbeat')
+            ->everyMinute();
     })
     ->create();
