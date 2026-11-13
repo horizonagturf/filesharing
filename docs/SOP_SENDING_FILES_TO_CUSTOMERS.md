@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Audience** | Internal staff (sales, parts, service, admin, marketing) |
-| **Purpose** | Securely send quotes, manuals, reports, photos and other documents to customers without using email attachments |
+| **Purpose** | Send non-sensitive documents (e.g. brochures, manuals, spec sheets, photos) to customers using a link instead of an email attachment |
 | **Application URL** | [INSERT INTERNAL URL] |
 | **Owner** | [INSERT OWNER, e.g. IT] |
 | **Version / date** | 1.0 / [INSERT DATE] |
@@ -15,18 +15,25 @@
 ## 1. When to use this
 
 Use the application when:
-- Files are too large or too sensitive for regular email.
-- You need an expiry date, a password, or a record of who accessed the files.
+- Files are non-sensitive and too large or awkward for a regular email attachment.
+- You want an expiry date or a record of who accessed the files.
 
-Do **not** use it for:
-- Anything that must be filed as an official record. The system of record stays **IntelliDealer** (parts, service, accounting) and **ClientLink / Salesforce** (customer and sales records). Save a copy of the final document there as well.
+**This application is NOT for sensitive files.** Do not upload or send:
+- Personal identifiers: SIN, driver's licence numbers, dates of birth.
+- Financing, credit or banking details (credit applications, financing agreements, void cheques, bank statements).
+- Anything containing dealer cost, margins, or John Deere program details.
+- Other customers' information.
+
+If a file contains any of the above, do not use this tool. Use the dealership's approved method for sensitive information: [INSERT APPROVED METHOD, e.g. IntelliDealer / ClientLink workflow or in-person]. If unsure, ask your manager or IT first.
+
+Also, this is not a system of record. The system of record stays **IntelliDealer** (parts, service, accounting) and **ClientLink / Salesforce** (customer and sales records). Save a copy of the final document there as well.
 
 ## 2. Before you start
 
 - [ ] You can sign in (**Sign in with Microsoft** using your work account).
 - [ ] Files are final and reviewed. Quotes, prices, trade-in values, financing terms and warranty wording must already be approved by the right person (e.g. Sales Manager). This tool does not check content.
+- [ ] **The files contain no sensitive information** (see section 1). Open each file and check. A password or OTP does **not** make a sensitive file acceptable to send here.
 - [ ] You removed anything the customer should not see: dealer cost, margins, John Deere program details, other customers' information.
-- [ ] You avoided sensitive personal data (SIN, driver's licence, date of birth, banking or credit details) unless there is an approved business need. If there is, use a password and OTP (see 4.1), and confirm with your manager first.
 - [ ] You have the customer's correct email address, taken from ClientLink / Salesforce.
 - [ ] File types are allowed. Blocked by default: `exe, bat, cmd, com, scr, pif, msi, dll, ps1, ps2, psc1, psc2, vbs, vbe, jse, wsf, wsh, reg, inf, cpl`. For several files, zip them or send them as separate files in one bundle.
 - [ ] Size and count are within limits: **5 MB per file and 100 files per bundle (default)**. Ask IT if you need more.
@@ -54,8 +61,8 @@ Complete the settings page:
 |---|---|
 | **Title** | Clear and specific, e.g. `Quote [QUOTE #] – [CUSTOMER NAME]`. The customer sees this. |
 | **Description** | Short, plain message, e.g. what is attached and what you need from them. No prices or commitments unless already approved. |
-| **Expiry** | Shortest period that works. Typical: 1 week for quotes, 1 month for manuals. Avoid **Forever** for anything sensitive. |
-| **Password** (optional) | Recommended for financial or personal documents. Also encrypts the ZIP. |
+| **Expiry** | Shortest period that works. Typical: 1 week for quotes, 1 month for manuals. Avoid **Forever** unless there is a clear reason. |
+| **Password** (optional) | Adds a basic extra barrier and encrypts the ZIP. It is **not** a reason to send sensitive files. |
 | **Share mode** | **Invitation** (default and recommended). Use static link only with manager approval. |
 | **Recipients** | Customer email(s). Separate with commas or new lines. Each person gets their own link. |
 | **Require email verification (OTP)** | Leave **checked**. Only uncheck if allowed by policy and the files are low risk. |
@@ -82,7 +89,7 @@ Complete the settings page:
 | Situation | Action |
 |---|---|
 | Customer did not get the email | Ask them to check spam/junk. Confirm the address. On the bundle page, use **Resend** for that recipient. |
-| Wrong email address, or sent in error | On the bundle page, use **Revoke** for that recipient right away. Report it to your manager and IT if sensitive files were involved (possible privacy incident under PIPEDA). |
+| Wrong email address, or sent in error | On the bundle page, use **Revoke** for that recipient right away. Tell your manager and IT. If the files contained any sensitive information, treat it as a possible privacy incident under PIPEDA and report it immediately. |
 | Customer needs more time | Bundles cannot be edited once completed. Create a new bundle. |
 | Customer cannot open the OTP | Codes expire. They can request a new one on the invitation page (hourly limit applies). Resend if needed. |
 | Customer lost the password | Give it again by phone. Never by the same email as the link. |
@@ -99,6 +106,7 @@ Check **Account** to see whether approval applies to you.
 
 ## 7. Rules of thumb
 
+- Never send sensitive files with this tool. When in doubt, don't send it and ask.
 - Invitation mode + OTP is the default. Do not bypass it for convenience.
 - One bundle per customer or per transaction. Do not mix customers in one bundle.
 - Never share another staff member's login or invitation links.
@@ -121,7 +129,7 @@ Check **Account** to see whether approval applies to you.
 | Problem | Contact |
 |---|---|
 | Cannot sign in, cannot upload, need higher limits, group or approval settings | IT (via [INSERT: monday.com / Freshservice / email]) |
-| Possible wrong-recipient or privacy incident | Your manager and IT immediately |
+| Possible wrong-recipient, or sensitive file sent by mistake | Your manager and IT immediately |
 | Content questions (pricing, warranty, financing) | Sales Manager / Service Manager |
 
 Built-in help is available in the application at `/help` (Getting started, Sharing and recipients, Approval, FAQ).
@@ -129,7 +137,7 @@ Built-in help is available in the application at `/help` (Getting started, Shari
 ## 10. Quick checklist
 
 1. Sign in. **Create new upload**.
-2. Title, description, expiry, password (if sensitive), **Invitation** mode, customer email, OTP on.
+2. Confirm files are **not sensitive**. Title, description, expiry, **Invitation** mode, customer email, OTP on.
 3. Upload files. Check list.
 4. Double-check recipient and content. **Complete**.
 5. Wait for approval if required.
