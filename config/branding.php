@@ -17,6 +17,7 @@ return [
         BrandingSettings::KEY_SHOW_CREDIT => null,
         BrandingSettings::KEY_MAIL_FROM_NAME => null,
         BrandingSettings::KEY_MAIL_FROM_ADDRESS => null,
+        BrandingSettings::KEY_MAIL_SENDER_MODE => BrandingSettings::SENDER_MODE_SYSTEM,
     ],
 
 ];

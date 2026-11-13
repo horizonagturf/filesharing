@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Mail\Concerns\UsesBundleOwnerSender;
 use App\Services\BrandingSettings;
 use App\Services\SystemHealth;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -70,6 +71,14 @@ class AppServiceProvider extends ServiceProvider
 
         // Admin-configurable sender identity (Branding settings) overrides env defaults.
         Event::listen(MessageSending::class, function (MessageSending $event): void {
+            // Messages sent on behalf of a bundle owner keep their explicit sender.
+            $headers = $event->message->getHeaders();
+            if ($headers->has(UsesBundleOwnerSender::OWNER_SENDER_HEADER)) {
+                $headers->remove(UsesBundleOwnerSender::OWNER_SENDER_HEADER);
+
+                return;
+            }
+
             try {
                 $branding = app(BrandingSettings::class);
                 $name = $branding->mailFromName();

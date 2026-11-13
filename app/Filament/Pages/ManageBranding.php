@@ -43,6 +43,7 @@ class ManageBranding extends Page implements HasForms
             'show_credit' => $branding->showCreditFooter(),
             'mail_from_name' => $settings[BrandingSettings::KEY_MAIL_FROM_NAME] ?? '',
             'mail_from_address' => $settings[BrandingSettings::KEY_MAIL_FROM_ADDRESS] ?? '',
+            'mail_sender_mode' => $branding->mailSenderMode(),
         ]);
 
         $this->hadLogoInForm = filled($this->data['logo_path'] ?? null);
@@ -80,6 +81,21 @@ class ManageBranding extends Page implements HasForms
                             ->maxLength(255),
                     ])
                     ->columns(2),
+                Forms\Components\Section::make('Bundle email sender')
+                    ->description('Controls who invitation and verification emails sent to recipients appear to come from.')
+                    ->schema([
+                        Forms\Components\Radio::make('mail_sender_mode')
+                            ->label('Send bundle emails from')
+                            ->options([
+                                BrandingSettings::SENDER_MODE_SYSTEM => 'System email (the sender configured above)',
+                                BrandingSettings::SENDER_MODE_USER => 'The user who created the bundle',
+                            ])
+                            ->descriptions([
+                                BrandingSettings::SENDER_MODE_USER => 'Uses the creator\'s name and email. Your mail provider must allow sending as those addresses (SPF/DKIM/DMARC), otherwise messages may be rejected or land in spam.',
+                            ])
+                            ->default(BrandingSettings::SENDER_MODE_SYSTEM)
+                            ->required(),
+                    ]),
                 Forms\Components\Section::make('Colors')
                     ->schema([
                         Forms\Components\ColorPicker::make('primary_color')
@@ -131,6 +147,10 @@ class ManageBranding extends Page implements HasForms
 
         $branding->set(BrandingSettings::KEY_MAIL_FROM_NAME, $data['mail_from_name'] ?: null);
         $branding->set(BrandingSettings::KEY_MAIL_FROM_ADDRESS, $data['mail_from_address'] ?: null);
+        $branding->set(
+            BrandingSettings::KEY_MAIL_SENDER_MODE,
+            ($data['mail_sender_mode'] ?? null) === BrandingSettings::SENDER_MODE_USER ? BrandingSettings::SENDER_MODE_USER : null,
+        );
         $branding->set(BrandingSettings::KEY_PRIMARY_COLOR, $data['primary_color']);
         $branding->set(BrandingSettings::KEY_ACCENT_COLOR, $data['accent_color']);
         $branding->set(BrandingSettings::KEY_FOOTER_TEXT, $data['footer_text'] ?: null);
