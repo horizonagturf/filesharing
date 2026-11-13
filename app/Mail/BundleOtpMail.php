@@ -2,9 +2,9 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\UsesBundleOwnerSender;
 use App\Models\BundleRecipient;
 use App\Services\BrandingSettings;
-use App\Mail\Concerns\UsesBundleOwnerSender;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
