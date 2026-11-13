@@ -21,7 +21,7 @@ Use the application when:
 **This application is NOT for sensitive files.** Do not upload or send:
 - Personal identifiers: SIN, driver's licence numbers, dates of birth.
 - Financing, credit or banking details (credit applications, financing agreements, void cheques, bank statements).
-- Anything containing dealer cost, margins, or John Deere program details.
+- Anything containing dealer cost or margins.
 - Other customers' information.
 
 If a file contains any of the above, do not use this tool. Use the dealership's approved method for sensitive information: [INSERT APPROVED METHOD, e.g. IntelliDealer / ClientLink workflow or in-person]. If unsure, ask your manager or IT first.
@@ -32,8 +32,8 @@ Also, this is not a system of record. The system of record stays **IntelliDealer
 
 - [ ] You can sign in (**Sign in with Microsoft** using your work account).
 - [ ] Files are final and reviewed. Quotes, prices, trade-in values, financing terms and warranty wording must already be approved by the right person (e.g. Sales Manager). This tool does not check content.
-- [ ] **The files contain no sensitive information** (see section 1). Open each file and check. A password or OTP does **not** make a sensitive file acceptable to send here.
-- [ ] You removed anything the customer should not see: dealer cost, margins, John Deere program details, other customers' information.
+- [ ] **You know the files contain no sensitive information** (see section 1). A password or OTP does **not** make a sensitive file acceptable to send here.
+- [ ] You removed anything the customer should not see: dealer cost, margins, other customers' information.
 - [ ] You have the customer's correct email address, taken from ClientLink / Salesforce.
 - [ ] File types are allowed. Blocked by default: `exe, bat, cmd, com, scr, pif, msi, dll, ps1, ps2, psc1, psc2, vbs, vbe, jse, wsf, wsh, reg, inf, cpl`. For several files, zip them or send them as separate files in one bundle.
 - [ ] Size and count are within limits: **5 MB per file and 100 files per bundle (default)**. Ask IT if you need more.
@@ -45,7 +45,7 @@ Also, this is not a system of record. The system of record stays **IntelliDealer
 | **Bundle** | One share: a set of files plus its settings. |
 | **Invitation mode** (recommended) | Each recipient gets their own emailed link. Only invited people can open it. |
 | **OTP** | One-time 6-digit code emailed to the recipient to confirm identity. Expires after **15 minutes**, with a limit of **5 attempts (default)**. |
-| **Static link** | Anyone with the link can open the files. Less secure. Only available if your group permits it. |
+| **Static link** | Anyone with the link can open the files, with no email invitation or OTP. Use it when the customer needs to forward the files to someone else (e.g. their accountant, banker or co-owner). Only available if your group permits it. |
 | **Approval** | Some groups need a reviewer to approve a bundle before it is sent. |
 
 ## 4. Procedure
@@ -63,7 +63,7 @@ Complete the settings page:
 | **Description** | Short, plain message, e.g. what is attached and what you need from them. No prices or commitments unless already approved. |
 | **Expiry** | Shortest period that works. Typical: 1 week for quotes, 1 month for manuals. Avoid **Forever** unless there is a clear reason. |
 | **Password** (optional) | Adds a basic extra barrier and encrypts the ZIP. It is **not** a reason to send sensitive files. |
-| **Share mode** | **Invitation** (default and recommended). Use static link only with manager approval. |
+| **Share mode** | **Invitation** (default and recommended). Choose **Static link** when the customer will need to forward the files to others. |
 | **Recipients** | Customer email(s). Separate with commas or new lines. Each person gets their own link. |
 | **Require email verification (OTP)** | Leave **checked**. Only uncheck if allowed by policy and the files are low risk. |
 
@@ -107,10 +107,10 @@ Check **Account** to see whether approval applies to you.
 ## 7. Rules of thumb
 
 - Never send sensitive files with this tool. When in doubt, don't send it and ask.
-- Invitation mode + OTP is the default. Do not bypass it for convenience.
+- Invitation mode + OTP is the default. Use a static link only when the customer needs to forward the files. With a static link, anyone who has the link can open the files, so send it only to the customer and set a short expiry.
 - One bundle per customer or per transaction. Do not mix customers in one bundle.
 - Never share another staff member's login or invitation links.
-- Never send dealer cost, margins, or John Deere program details to customers.
+- Never send dealer cost or margins to customers.
 - Do not make commitments (price, delivery dates, warranty) in the title or description unless a human with authority has approved the wording.
 - Keep emails to customers short and friendly. Say what was sent, when it expires, and who to call.
 
