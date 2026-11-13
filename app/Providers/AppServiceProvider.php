@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Mail\Concerns\UsesBundleOwnerSender;
 use App\Services\BrandingSettings;
 use App\Services\SystemHealth;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -73,8 +72,8 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(MessageSending::class, function (MessageSending $event): void {
             // Messages sent on behalf of a bundle owner keep their explicit sender.
             $headers = $event->message->getHeaders();
-            if ($headers->has(UsesBundleOwnerSender::OWNER_SENDER_HEADER)) {
-                $headers->remove(UsesBundleOwnerSender::OWNER_SENDER_HEADER);
+            if ($headers->has(BrandingSettings::OWNER_SENDER_HEADER)) {
+                $headers->remove(BrandingSettings::OWNER_SENDER_HEADER);
 
                 return;
             }

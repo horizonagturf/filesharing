@@ -9,8 +9,6 @@ use Symfony\Component\Mime\Email;
 
 trait UsesBundleOwnerSender
 {
-    public const OWNER_SENDER_HEADER = 'X-Bundle-Owner-Sender';
-
     /**
      * When Branding is set to "user" mode, send from the bundle creator instead
      * of the system sender. Falls back to the system sender if the creator has
@@ -32,7 +30,7 @@ trait UsesBundleOwnerSender
 
         $this->withSymfonyMessage(function (Email $message) use ($address): void {
             $message->from($address);
-            $message->getHeaders()->addTextHeader(self::OWNER_SENDER_HEADER, '1');
+            $message->getHeaders()->addTextHeader(BrandingSettings::OWNER_SENDER_HEADER, '1');
         });
     }
 }

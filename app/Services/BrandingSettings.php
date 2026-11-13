@@ -33,6 +33,9 @@ class BrandingSettings
 
     public const SENDER_MODE_USER = 'user';
 
+    /** Internal header marking mail already addressed from the bundle owner. */
+    public const OWNER_SENDER_HEADER = 'X-Bundle-Owner-Sender';
+
     public const DEFAULT_LOGO_PATH = 'images/logo.svg';
 
     private const CACHE_KEY = 'branding.settings';
