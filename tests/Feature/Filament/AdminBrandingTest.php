@@ -147,4 +147,32 @@ class AdminBrandingTest extends TestCase
         $this->assertSame('files@org.test', $from->getAddress());
         $this->assertSame('Org Files', $from->getName());
     }
+
+    public function test_admin_can_choose_bundle_creator_as_mail_sender(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        Livewire::actingAs($admin)
+            ->test(ManageBranding::class)
+            ->fillForm([
+                'primary_color' => '#112233',
+                'accent_color' => '#445566',
+                'mail_sender_mode' => BrandingSettings::SENDER_MODE_USER,
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(BrandingSettings::SENDER_MODE_USER, app(BrandingSettings::class)->mailSenderMode());
+
+        Livewire::actingAs($admin)
+            ->test(ManageBranding::class)
+            ->fillForm([
+                'primary_color' => '#112233',
+                'accent_color' => '#445566',
+                'mail_sender_mode' => BrandingSettings::SENDER_MODE_SYSTEM,
+            ])
+            ->call('save');
+
+        $this->assertSame(BrandingSettings::SENDER_MODE_SYSTEM, app(BrandingSettings::class)->mailSenderMode());
+    }
 }

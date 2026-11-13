@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\UsesBundleOwnerSender;
 use App\Models\BundleRecipient;
 use App\Services\BrandingSettings;
 use Illuminate\Bus\Queueable;
@@ -13,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 
 class BundleOtpMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable, SerializesModels, UsesBundleOwnerSender;
 
     public function __construct(
         public readonly BundleRecipient $recipient,
@@ -22,6 +23,8 @@ class BundleOtpMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        $this->applyBundleOwnerSender($this->recipient->bundle);
+
         return new Envelope(
             subject: __('invitation.mail.otp-subject', [
                 'app' => app(BrandingSettings::class)->appName(),

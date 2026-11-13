@@ -27,6 +27,15 @@ class BrandingSettings
 
     public const KEY_MAIL_FROM_ADDRESS = 'branding.mail_from_address';
 
+    public const KEY_MAIL_SENDER_MODE = 'branding.mail_sender_mode';
+
+    public const SENDER_MODE_SYSTEM = 'system';
+
+    public const SENDER_MODE_USER = 'user';
+
+    /** Internal header marking mail already addressed from the bundle owner. */
+    public const OWNER_SENDER_HEADER = 'X-Bundle-Owner-Sender';
+
     public const DEFAULT_LOGO_PATH = 'images/logo.svg';
 
     private const CACHE_KEY = 'branding.settings';
@@ -83,6 +92,17 @@ class BrandingSettings
         $value = $this->get(self::KEY_MAIL_FROM_ADDRESS);
 
         return filled($value) ? $value : null;
+    }
+
+    /**
+     * Whether recipient-facing bundle emails come from the system sender or
+     * from the user who created the bundle.
+     */
+    public function mailSenderMode(): string
+    {
+        return $this->get(self::KEY_MAIL_SENDER_MODE) === self::SENDER_MODE_USER
+            ? self::SENDER_MODE_USER
+            : self::SENDER_MODE_SYSTEM;
     }
 
     public function showCreditFooter(): bool
